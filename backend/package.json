@@ -9,14 +9,18 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
+    "@auth/express": "^0.12.0",
+    "@auth/mongodb-adapter": "^3.11.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.20.0",
     "mongoose": "^8.19.2",
-    "nodemailer": "^7.0.9"
+    "nodemailer": "^7.0.10",
+    "zod": "^4.1.12"
   }
 }
