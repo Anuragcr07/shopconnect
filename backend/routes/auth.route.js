@@ -33,7 +33,7 @@ const getUserFromDb = async (email, passwordHash) => {
 // --- End Helper functions ---
 
 // Auth.js setup for Express
-router.use("/auth/*", ExpressAuth({
+router.use("/auth", ExpressAuth({
     providers: [
         Google(),
         Credentials({
