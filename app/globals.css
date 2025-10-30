@@ -1,0 +1,6 @@
+@import "tailwindcss/preflight";
+
+/* Add any global styles here, e.g., body background */
+body {
+  background-color: #f8fafc; /* Light off-white */
+}
