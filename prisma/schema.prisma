@@ -1,0 +1,88 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  userId       String   @db.ObjectId
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // passwordHash String? // REMOVE THIS LINE
+}
+
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?   // <--- CORRECT PLACE: Add it here!
+  role          String    @default("CUSTOMER") // "CUSTOMER" or "SHOPKEEPER"
+  latitude      Float?
+  longitude     Float?
+  shopName      String?   // Only for SHOPKEEPER
+  address       String?   // Only for SHOPKEEPER
+  phone         String?   // Contact for SHOPKEEPER
+
+  accounts      Account[]
+  sessions      Session[]
+  customerPosts CustomerPost[] // For customers
+  shopRequests  ShopRequest[]  // For shopkeepers
+}
+
+model VerificationToken {
+  identifier String   @id @default(auto()) @map("_id") @db.ObjectId
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model CustomerPost {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  status      String    @default("OPEN") // "OPEN", "FULFILLED", "CLOSED"
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  customerId  String    @db.ObjectId
+  customer    User      @relation(fields: [customerId], references: [id])
+  responses   ShopRequest[]
+}
+
+model ShopRequest {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  customerPostId String  @db.ObjectId
+  customerPost CustomerPost @relation(fields: [customerPostId], references: [id])
+  shopkeeperId String    @db.ObjectId
+  shopkeeper   User      @relation(fields: [shopkeeperId], references: [id])
+  isAvailable  Boolean   @default(false)
+  message      String?
+  createdAt    DateTime  @default(now())
+}
