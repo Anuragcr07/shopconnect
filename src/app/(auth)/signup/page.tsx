@@ -98,7 +98,7 @@ export default function SignupPage() {
                 type="button"
                 variant={role === 'CUSTOMER' ? 'primary' : 'outline'}
                 onClick={() => setRole('CUSTOMER')}
-                className="flex-1"
+                className="flex-1 text-black"
               >
                 Customer
               </Button>
@@ -106,7 +106,7 @@ export default function SignupPage() {
                 type="button"
                 variant={role === 'SHOPKEEPER' ? 'primary' : 'outline'}
                 onClick={() => setRole('SHOPKEEPER')}
-                className="flex-1"
+                className="flex-1 text-black"
               >
                 Shopkeeper
               </Button>
@@ -143,7 +143,7 @@ export default function SignupPage() {
           )}
 
           {error && <p className="text-red-500 text-sm">{error}</p>}
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full text-black" disabled={isLoading}>
             {isLoading ? 'Signing Up...' : 'Sign Up'}
           </Button>
         </form>

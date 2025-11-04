@@ -117,7 +117,7 @@ export default function CustomerDashboardPage() {
       <div className="mb-8 flex justify-between items-center">
         <h2 className="text-2xl font-semibold text-gray-800">Your Requirements</h2>
         <Link href="/customer/posts/create">
-          <Button>Post New Requirement</Button>
+          <Button className='text-black'>Post New Requirement</Button>
         </Link>
       </div>
 
@@ -173,7 +173,7 @@ export default function CustomerDashboardPage() {
               {post.status === 'OPEN' && post.responses.length > 0 && (
                 <Button
                   onClick={() => handleFulfillPost(post.id)}
-                  className="mt-4 w-full"
+                  className="mt-4 w-full text-black"
                   variant="primary"
                 >
                   Mark as Fulfilled

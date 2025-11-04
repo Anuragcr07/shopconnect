@@ -23,7 +23,7 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] p-4 text-center">
       <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-tight mb-6">
-        Find <span className="text-transparent bg-clip-text bg-gradient-button">Anything</span>,
+        Find <span className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-tight mb-6">Anything</span>,
         <br />
         Locally.
       </h1>
@@ -39,7 +39,7 @@ export default function Home() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <Button type="submit" className="whitespace-nowrap">
+        <Button type="submit" className="whitespace-nowrap text-black">
           Search
         </Button>
       </form>

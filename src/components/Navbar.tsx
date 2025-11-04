@@ -23,7 +23,7 @@ const Navbar: React.FC = () => {
                 Dashboard
               </Button>
             </Link>
-            <Button onClick={() => signOut()} variant="outline">
+            <Button className='text-black' onClick={() => signOut()} variant="outline">
               Sign Out
             </Button>
           </>
@@ -35,7 +35,7 @@ const Navbar: React.FC = () => {
               </Button>
             </Link>
             <Link href="/signup">
-              <Button>
+              <Button className='text-black'>
                 Sign Up
               </Button>
             </Link>

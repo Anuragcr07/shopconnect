@@ -138,7 +138,7 @@ export default function ShopkeeperDashboardPage() {
                   />
                   <div className="flex gap-3">
                     <Button
-                      className="flex-1"
+                      className="flex-1 text-primary-blue border-primary-blue hover:text-white"
                       onClick={() => handleRespondToRequest(request.id, true)}
                     >
                       Yes, Available

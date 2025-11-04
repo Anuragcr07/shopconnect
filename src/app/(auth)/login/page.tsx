@@ -56,7 +56,7 @@ export default function LoginPage() {
             required
           />
           {error && <p className="text-red-500 text-sm">{error}</p>}
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full text-black">
             Login
           </Button>
         </form>
