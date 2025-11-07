@@ -77,12 +77,13 @@ model CustomerPost {
 }
 
 model ShopRequest {
-  id           String    @id @default(auto()) @map("_id") @db.ObjectId
-  customerPostId String  @db.ObjectId
-  customerPost CustomerPost @relation(fields: [customerPostId], references: [id])
-  shopkeeperId String    @db.ObjectId
-  shopkeeper   User      @relation(fields: [shopkeeperId], references: [id])
-  isAvailable  Boolean   @default(false)
-  message      String?
-  createdAt    DateTime  @default(now())
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  customerPostId String    @db.ObjectId
+  customerPost   CustomerPost @relation(fields: [customerPostId], references: [id])
+  shopkeeperId   String    @db.ObjectId
+  shopkeeper     User      @relation(fields: [shopkeeperId], references: [id])
+  isAvailable    Boolean   @default(false)
+  message        String?
+  imageUrls      String[]  @default([])   
+  createdAt      DateTime  @default(now())
 }
