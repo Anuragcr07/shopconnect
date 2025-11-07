@@ -1,4 +1,3 @@
-// src/app/api/customer/posts/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -34,7 +33,7 @@ export async function POST(req: Request) {
   }
 }
 
-// Get all customer posts for the logged-in customer, with responses
+// Get all customer posts for the logged-in customer (with responses + shopkeeper info)
 export async function GET() {
   const session = await getServerSession(authOptions);
 
@@ -61,6 +60,7 @@ export async function GET() {
                 longitude: true,
               },
             },
+            // ❌ removed `imageUrls: true` — not needed
           },
         },
       },
