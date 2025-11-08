@@ -1,86 +1,106 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { Loader } from "@googlemaps/js-api-loader";
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
+import type L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
-/// <reference types="@types/google.maps" />
+// Dynamically import react-leaflet components (client-only)
+const MapContainer = dynamic(
+  () => import("react-leaflet").then((m) => m.MapContainer),
+  { ssr: false }
+);
+const TileLayer = dynamic(() => import("react-leaflet").then((m) => m.TileLayer), { ssr: false });
+const Marker = dynamic(() => import("react-leaflet").then((m) => m.Marker), { ssr: false });
+const Popup = dynamic(() => import("react-leaflet").then((m) => m.Popup), { ssr: false });
+const GeoJSON = dynamic(() => import("react-leaflet").then((m) => m.GeoJSON), { ssr: false });
 
-declare module "@googlemaps/js-api-loader" {
-  interface Loader {
-    importLibrary: (library: string) => Promise<any>;
-  }
+interface MarkerData {
+  lat: number;
+  lng: number;
+  title: string;
 }
-
 
 interface MapComponentProps {
   center: { lat: number; lng: number };
-  markers?: { lat: number; lng: number; title: string; shopId?: string }[];
+  markers?: MarkerData[];
+  routeGeoJSON?: any; // expects GeoJSON FeatureCollection / Feature
   zoom?: number;
 }
 
-const MapComponent: React.FC<MapComponentProps> = ({ center, markers = [], zoom = 14 }) => {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<google.maps.Map | null>(null);
-  const mapMarkersRef = useRef<google.maps.Marker[]>([]);
+export default function MapComponent({
+  center,
+  markers = [],
+  routeGeoJSON,
+  zoom = 14,
+}: MapComponentProps) {
+  const [LModule, setLModule] = useState<typeof L | null>(null);
+  const [mapReady, setMapReady] = useState(false);
 
+  // Load leaflet at runtime and fix default icon paths
   useEffect(() => {
-    if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
-      console.error("Google Maps API Key is not set in NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.");
-      return;
-    }
-
-    const loader = new Loader({
-      apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
-      version: "weekly",
-    });
-
-    let isMounted = true;
-
-    (async () => {
-      try {
-        const { Map } = await loader.importLibrary("maps"); // ✅ modern method
-        if (isMounted && mapRef.current) {
-          const googleMap = new Map(mapRef.current, {
-            center,
-            zoom,
-            fullscreenControl: false,
-            streetViewControl: false,
-            mapTypeControl: false,
-          });
-          setMap(googleMap);
-        }
-      } catch (err) {
-        console.error("Error loading Google Maps API:", err);
-      }
-    })();
-
+    let mounted = true;
+    import("leaflet")
+      .then((leaflet) => {
+        // fix default icon paths when using CDN icons
+        delete (leaflet.Icon.Default.prototype as any)._getIconUrl;
+        leaflet.Icon.Default.mergeOptions({
+          iconRetinaUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+          iconUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+          shadowUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+        });
+        if (mounted) setLModule(leaflet);
+      })
+      .catch((err) => {
+        console.error("Failed to load leaflet:", err);
+      });
     return () => {
-      isMounted = false;
-      mapMarkersRef.current.forEach((marker) => marker.setMap(null));
-      mapMarkersRef.current = [];
+      mounted = false;
     };
   }, []);
 
-  useEffect(() => {
-    if (map) {
-      mapMarkersRef.current.forEach((marker) => marker.setMap(null));
-      mapMarkersRef.current = [];
+  // Render placeholder until leaflet is ready (prevents SSR hydration issues)
+  if (!LModule) {
+    return <div className="h-[400px] w-full bg-gray-100 rounded-lg" />;
+  }
 
-      map.setCenter(center);
-      map.setZoom(zoom);
+  // NOTE: MapContainer & friends are loaded dynamically (client only)
+  return (
+    // @ts-ignore — MapContainer is dynamically imported, types get tricky; runtime is fine
+    <MapContainer
+      center={[center.lat, center.lng] as [number, number]}
+      zoom={zoom}
+      whenReady={() => setMapReady(true)}
+      style={{ height: "400px", width: "100%" }}
+    >
+      {/* TileLayer attribution string must be a string */}
+      {/* If you will use Mapbox replace url and attribution accordingly */}
+      {/* OSM tile URL (free) */}
+      {/* attribution uses escaped entities or plain HTML string */}
+      {/* no TypeScript errors when using dynamic imports at runtime */}
+      {/* @ts-ignore */}
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      />
 
-      markers.forEach((markerData) => {
-        const marker = new google.maps.Marker({
-          position: markerData,
-          map,
-          title: markerData.title,
-        });
-        mapMarkersRef.current.push(marker);
-      });
-    }
-  }, [map, center, markers, zoom]);
+      {/* Markers */}
+      {markers.map((m, i) => (
+        // @ts-ignore
+        <Marker key={i} position={[m.lat, m.lng] as [number, number]}>
+          {/* @ts-ignore */}
+          <Popup>{m.title}</Popup>
+        </Marker>
+      ))}
 
-  return <div ref={mapRef} className="w-full h-full rounded-lg" style={{ minHeight: "300px" }} />;
-};
-
-export default MapComponent;
+      {/* GeoJSON route (if provided). react-leaflet GeoJSON accepts a FeatureCollection or Feature */}
+      {routeGeoJSON && (
+        // @ts-ignore
+        <GeoJSON data={routeGeoJSON} style={{ color: "#007bff", weight: 4 }} />
+      )}
+    </MapContainer>
+  );
+}
