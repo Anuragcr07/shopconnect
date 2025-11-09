@@ -1,16 +1,18 @@
 // src/components/ui/Input.tsx
 import React from 'react';
 import { twMerge } from 'tailwind-merge';
+import clsx from 'clsx';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
+  labelClassName?: string;
 }
 
-const Input: React.FC<InputProps> = ({ label, className, ...props }) => {
+const Input: React.FC<InputProps> = ({ label, className, labelClassName, ...props }) => {
   return (
     <div className="flex flex-col gap-2">
       {label && (
-        <label htmlFor={props.id} className="text-sm font-medium text-gray-700">
+        <label htmlFor={props.id} className={clsx("text-sm font-medium", labelClassName)}>
           {label}
         </label>
       )}

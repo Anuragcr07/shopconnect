@@ -1,4 +1,3 @@
-// src/app/(auth)/signup/page.tsx
 "use client";
 
 import Button from '@/components/ui/Button';
@@ -62,9 +61,9 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
-      <Card className="w-full max-w-lg p-8">
-        <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Join ShopConnect</h2>
+    <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4 bg-gray-900 text-gray-100">
+      <Card className="w-full max-w-lg p-8 bg-gray-800 border border-blue-700/50 shadow-2xl rounded-lg">
+        <h2 className="text-3xl font-bold text-center text-white mb-8">Join LocalTrade Hub</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input
             label="Name"
@@ -73,6 +72,8 @@ export default function SignupPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
+            className="bg-gray-700 text-white border-gray-600 focus:border-blue-500"
+            labelClassName="text-gray-300"
           />
           <Input
             label="Email"
@@ -81,6 +82,8 @@ export default function SignupPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            className="bg-gray-700 text-white border-gray-600 focus:border-blue-500"
+            labelClassName="text-gray-300"
           />
           <Input
             label="Password"
@@ -89,24 +92,33 @@ export default function SignupPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            className="bg-gray-700 text-white border-gray-600 focus:border-blue-500"
+            labelClassName="text-gray-300"
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">I am a:</label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">I am a:</label>
             <div className="flex space-x-4">
               <Button
                 type="button"
-                variant={role === 'CUSTOMER' ? 'primary' : 'outline'}
+                // Using new custom styles for role selection buttons
+                className={`flex-1 font-semibold py-2 rounded-md transition-colors ${
+                  role === 'CUSTOMER'
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md'
+                    : 'bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600'
+                }`}
                 onClick={() => setRole('CUSTOMER')}
-                className="flex-1 text-black"
               >
                 Customer
               </Button>
               <Button
                 type="button"
-                variant={role === 'SHOPKEEPER' ? 'primary' : 'outline'}
+                className={`flex-1 font-semibold py-2 rounded-md transition-colors ${
+                  role === 'SHOPKEEPER'
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md'
+                    : 'bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600'
+                }`}
                 onClick={() => setRole('SHOPKEEPER')}
-                className="flex-1 text-black"
               >
                 Shopkeeper
               </Button>
@@ -122,6 +134,8 @@ export default function SignupPage() {
                 value={shopName}
                 onChange={(e) => setShopName(e.target.value)}
                 required={role === 'SHOPKEEPER'}
+                className="bg-gray-700 text-white border-gray-600 focus:border-blue-500"
+                labelClassName="text-gray-300"
               />
               <Input
                 label="Shop Address"
@@ -130,6 +144,8 @@ export default function SignupPage() {
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 required={role === 'SHOPKEEPER'}
+                className="bg-gray-700 text-white border-gray-600 focus:border-blue-500"
+                labelClassName="text-gray-300"
               />
               <Input
                 label="Phone Number"
@@ -138,18 +154,20 @@ export default function SignupPage() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 required={role === 'SHOPKEEPER'}
+                className="bg-gray-700 text-white border-gray-600 focus:border-blue-500"
+                labelClassName="text-gray-300"
               />
             </>
           )}
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          <Button type="submit" className="w-full text-black" disabled={isLoading}>
+          {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-md shadow-md transition-colors" disabled={isLoading}>
             {isLoading ? 'Signing Up...' : 'Sign Up'}
           </Button>
         </form>
-        <p className="text-center text-gray-600 mt-6">
+        <p className="text-center text-gray-400 mt-6">
           Already have an account?{' '}
-          <Link href="/login" className="text-primary-blue hover:underline">
+          <Link href="/login" className="text-blue-400 hover:underline hover:text-blue-300 transition-colors">
             Login
           </Link>
         </p>
