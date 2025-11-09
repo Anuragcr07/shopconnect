@@ -56,7 +56,6 @@ export default function CustomerDashboardPage() {
     }
   }, [status, session]);
 
-  // Fetch all posts for this customer
   const fetchCustomerPosts = async () => {
     setLoadingPosts(true);
     try {
@@ -71,7 +70,6 @@ export default function CustomerDashboardPage() {
     }
   };
 
-  // 📍 Show static shop location (no route)
   const handleViewShopOnMap = (shopkeeper: ShopkeeperInfo) => {
     if (shopkeeper.latitude && shopkeeper.longitude) {
       setRouteGeoJSON(null); // reset route
@@ -88,7 +86,6 @@ export default function CustomerDashboardPage() {
     }
   };
 
-  // 🧭 Get driving directions via OpenRouteService
   const handleGetDirections = async (shopLat: number, shopLng: number) => {
     if (!navigator.geolocation) {
       alert("Your browser does not support geolocation.");
@@ -137,8 +134,8 @@ export default function CustomerDashboardPage() {
 
   if (status === "loading") {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
-        Loading...
+      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] bg-gray-900 text-gray-100">
+        <p>Loading user session...</p>
       </div>
     );
   }
@@ -146,141 +143,151 @@ export default function CustomerDashboardPage() {
   if (!session || session.user.role !== "CUSTOMER") return null;
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto">
-      <h1 className="text-4xl font-bold text-gray-900 mb-8">
-        Welcome, <span className="text-primary-blue">{session.user.name}</span>!
-      </h1>
+    <div className="min-h-[calc(100vh-80px)] bg-gray-900 text-gray-100 p-4 md:p-8 pt-20"> {/* Added pt-20 for navbar offset */}
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-4xl font-bold text-white mb-8">
+          Welcome, <span className="text-blue-400">{session.user.name}</span>!
+        </h1>
 
-      <div className="mb-8 flex justify-between items-center">
-        <h2 className="text-2xl font-semibold text-gray-800">Your Requirements</h2>
-        <Link href="/customer/posts/create">
-          <Button className="text-black">Post New Requirement</Button>
-        </Link>
-      </div>
-
-      {loadingPosts ? (
-        <p className="text-center text-gray-600">Loading your posts...</p>
-      ) : posts.length === 0 ? (
-        <p className="text-center text-gray-600">
-          You haven't posted any requirements yet.
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts.map((post) => (
-            <Card key={post.id} className="flex flex-col">
-              <h3 className="text-xl font-bold text-gray-800 mb-2">{post.title}</h3>
-              <p className="text-gray-600 mb-4">{post.description}</p>
-              <div className="flex justify-between items-center text-sm text-gray-500 mb-4">
-                <span>Posted: {new Date(post.createdAt).toLocaleDateString()}</span>
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    post.status === "OPEN"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : post.status === "FULFILLED"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-gray-100 text-gray-800"
-                  }`}
-                >
-                  {post.status}
-                </span>
-              </div>
-
-              {post.responses.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <h4 className="font-semibold text-gray-700 mb-2">
-                    Shop Responses:
-                  </h4>
-                  {post.responses.map((response) => (
-                    <div
-                      key={response.id}
-                      className="bg-gray-50 p-3 rounded-lg mb-2 shadow-sm"
-                    >
-                      <p className="font-medium text-gray-800">
-                        {response.shopkeeper.shopName || response.shopkeeper.name}
-                        {response.isAvailable && (
-                          <span className="text-green-600 ml-2">(Available!)</span>
-                        )}
-                      </p>
-
-                      {response.message && (
-                        <p className="text-sm text-gray-600 italic mt-1">
-                          "{response.message}"
-                        </p>
-                      )}
-
-                      {/* 🖼️ Images */}
-                      {response.imageUrls && response.imageUrls.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-3">
-                          {response.imageUrls.map((url, idx) => (
-                            <img
-                              key={idx}
-                              src={url}
-                              alt={`Shop photo ${idx}`}
-                              className="w-20 h-20 object-cover rounded-lg border border-gray-300 cursor-pointer hover:opacity-80"
-                              onClick={() => setSelectedImage(url)}
-                            />
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="text-sm text-gray-700 mt-2 space-y-1">
-                        <p>Address: {response.shopkeeper.address}</p>
-                        <p>Phone: {response.shopkeeper.phone}</p>
-                      </div>
-
-                      {response.shopkeeper.latitude && response.shopkeeper.longitude && (
-                        <div className="flex gap-2 mt-3">
-                          <Button
-                            variant="outline"
-                            className="text-sm border-blue-600 text-blue-600 hover:bg-blue-50"
-                            onClick={() => handleViewShopOnMap(response.shopkeeper)}
-                          >
-                            📍 View on map
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="text-sm border-green-600 text-green-600 hover:bg-green-50"
-                            onClick={() =>
-                              handleGetDirections(
-                                response.shopkeeper.latitude,
-                                response.shopkeeper.longitude
-                              )
-                            }
-                          >
-                            🧭 Get Directions
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {post.status === "OPEN" && post.responses.length > 0 && (
-                <Button
-                  onClick={() => handleFulfillPost(post.id)}
-                  className="mt-4 w-full text-black"
-                  variant="primary"
-                >
-                  Mark as Fulfilled
-                </Button>
-              )}
-            </Card>
-          ))}
+        <div className="mb-10 flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-gray-800 rounded-lg shadow-xl border border-blue-700/50">
+          <h2 className="text-3xl font-semibold text-gray-100">Your Requirements</h2>
+          <Link href="/customer/posts/create">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-md shadow-md transition-colors text-lg">
+              Post New Requirement
+            </Button>
+          </Link>
         </div>
-      )}
+
+        {loadingPosts ? (
+          <p className="text-center text-gray-400 text-lg mt-10">Loading your active requests...</p>
+        ) : posts.length === 0 ? (
+          <div className="text-center text-gray-400 text-lg mt-10 p-6 bg-gray-800 rounded-lg shadow-lg border border-gray-700/50">
+            <p className="mb-4">
+              You haven't posted any requirements yet.
+            </p>
+            <Link href="/customer/posts/create">
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md shadow-md transition-colors">
+                Start by posting one!
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {posts.map((post) => (
+              <Card key={post.id} className="flex flex-col bg-gray-800 border border-blue-700/50 shadow-xl text-gray-100">
+                <h3 className="text-xl font-bold text-white mb-2">{post.title}</h3>
+                <p className="text-gray-300 mb-4 text-sm">{post.description}</p>
+                <div className="flex justify-between items-center text-sm text-gray-400 mb-4 border-t border-gray-700 pt-3">
+                  <span>Posted: {new Date(post.createdAt).toLocaleDateString()}</span>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      post.status === "OPEN"
+                        ? "bg-yellow-600 text-white"
+                        : post.status === "FULFILLED"
+                        ? "bg-green-600 text-white"
+                        : "bg-gray-600 text-white"
+                    }`}
+                  >
+                    {post.status}
+                  </span>
+                </div>
+
+                {post.responses.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-gray-700">
+                    <h4 className="font-semibold text-gray-200 mb-3 text-lg">
+                      Shop Responses ({post.responses.length}):
+                    </h4>
+                    {post.responses.map((response) => (
+                      <div
+                        key={response.id}
+                        className="bg-gray-700 p-4 rounded-lg mb-3 shadow-md border border-gray-600"
+                      >
+                        <p className="font-medium text-white text-base">
+                          {response.shopkeeper.shopName || response.shopkeeper.name}
+                          {response.isAvailable && (
+                            <span className="text-green-400 ml-2">(Available!)</span>
+                          )}
+                        </p>
+
+                        {response.message && (
+                          <p className="text-sm text-gray-300 italic mt-2">
+                            "{response.message}"
+                          </p>
+                        )}
+
+                        {/* 🖼️ Images */}
+                        {response.imageUrls && response.imageUrls.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {response.imageUrls.map((url, idx) => (
+                              <img
+                                key={idx}
+                                src={url}
+                                alt={`Shop photo ${idx}`}
+                                className="w-16 h-16 object-cover rounded-md border border-gray-500 cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => setSelectedImage(url)}
+                              />
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="text-sm text-gray-400 mt-3 space-y-1">
+                          <p>Address: {response.shopkeeper.address}</p>
+                          <p>Phone: {response.shopkeeper.phone}</p>
+                        </div>
+
+                        {response.shopkeeper.latitude && response.shopkeeper.longitude && (
+                          <div className="flex gap-3 mt-4">
+                            <Button
+                              variant="outline"
+                              className="text-sm border-blue-500 text-blue-300 hover:bg-blue-900/40 hover:text-blue-200 py-1 px-3"
+                              onClick={() => handleViewShopOnMap(response.shopkeeper)}
+                            >
+                              📍 View on map
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="text-sm border-green-500 text-green-300 hover:bg-green-900/40 hover:text-green-200 py-1 px-3"
+                              onClick={() =>
+                                handleGetDirections(
+                                  response.shopkeeper.latitude,
+                                  response.shopkeeper.longitude
+                                )
+                              }
+                            >
+                              🧭 Get Directions
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {post.status === "OPEN" && post.responses.length > 0 && (
+                  <Button
+                    onClick={() => handleFulfillPost(post.id)}
+                    className="mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-md shadow-md transition-colors"
+                  >
+                    Mark as Fulfilled
+                  </Button>
+                )}
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* 🗺 Map Modal */}
       {showMap && mapCenter && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-4xl h-3/4 flex flex-col relative">
-            <h3 className="text-xl font-bold mb-4">Shop Location</h3>
-            <div className="rounded-lg overflow-hidden">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-5xl h-[85vh] bg-gray-800 border border-blue-700/50 shadow-2xl rounded-lg flex flex-col relative p-6">
+            <h3 className="text-2xl font-bold text-white mb-4">Shop Location</h3>
+            <div className="flex-grow rounded-lg overflow-hidden border border-gray-600">
               <MapComponent center={mapCenter} markers={mapMarkers} routeGeoJSON={routeGeoJSON} />
             </div>
             <Button
               variant="outline"
-              className="absolute top-4 right-4 text-red-600 border-red-600 hover:bg-red-50 hover:text-red-600"
+              className="absolute top-4 right-4 text-red-400 border-red-500 hover:bg-red-900/40 hover:text-red-300 py-2 px-4 text-sm"
               onClick={() => setShowMap(false)}
             >
               Close Map
@@ -292,13 +299,13 @@ export default function CustomerDashboardPage() {
       {/* 🖼 Image Preview Modal */}
       {selectedImage && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4"
           onClick={() => setSelectedImage(null)}
         >
           <img
             src={selectedImage}
-            alt="Preview"
-            className="max-w-3xl max-h-[80vh] rounded-lg shadow-lg border-4 border-white"
+            alt="Response Preview"
+            className="max-w-full max-h-[90vh] rounded-lg shadow-2xl border-4 border-blue-500"
           />
         </div>
       )}

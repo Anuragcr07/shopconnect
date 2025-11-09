@@ -1,4 +1,3 @@
-// src/app/(customer)/posts/create/page.tsx
 "use client";
 
 import Button from '@/components/ui/Button';
@@ -6,7 +5,7 @@ import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Textarea } from '@/components/ui/Textarea'; // We'll create this simple component
+import { Textarea } from '@/components/ui/Textarea'; // Make sure this component is defined with proper styles
 
 export default function CreateCustomerPostPage() {
   const router = useRouter();
@@ -53,9 +52,9 @@ export default function CreateCustomerPostPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
-      <Card className="w-full max-w-md p-8">
-        <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Post Your Requirement</h2>
+    <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4 bg-gray-900 text-gray-100 pt-20"> {/* Added pt-20 */}
+      <Card className="w-full max-w-md p-8 bg-gray-800 border border-blue-700/50 shadow-2xl rounded-lg">
+        <h2 className="text-3xl font-bold text-center text-white mb-8">Post Your Requirement</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input
             label="What are you looking for?"
@@ -64,16 +63,20 @@ export default function CreateCustomerPostPage() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
+            className="bg-gray-700 text-white border-gray-600 focus:border-blue-500"
+            labelClassName="text-gray-300"
           />
-          <Textarea // Use Textarea for longer descriptions
+          <Textarea // Assuming Textarea also accepts className and labelClassName
             label="Describe your requirement (optional)"
             placeholder="I need a specific color or model, etc."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
+            className="bg-gray-700 text-white border-gray-600 focus:border-blue-500"
+            labelClassName="text-gray-300"
           />
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-md shadow-md transition-colors" disabled={isLoading}>
             {isLoading ? 'Posting...' : 'Post Requirement'}
           </Button>
         </form>
@@ -81,3 +84,34 @@ export default function CreateCustomerPostPage() {
     </div>
   );
 }
+
+// You need to ensure your Textarea component exists and supports the className/labelClassName props.
+// Here's a basic Textarea component you can use if you don't have one:
+// src/components/ui/Textarea.tsx
+// "use client";
+// import React from 'react';
+// import { twMerge } from 'tailwind-merge'; // or simple string concatenation if preferred
+
+// interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+//   label: string;
+//   labelClassName?: string;
+// }
+
+// export const Textarea: React.FC<TextareaProps> = ({ label, id, labelClassName, className, ...props }) => {
+//   const textareaId = id || label.toLowerCase().replace(/\s/g, '-');
+//   return (
+//     <div>
+//       <label htmlFor={textareaId} className={twMerge("block text-sm font-medium text-gray-700 mb-2", labelClassName)}>
+//         {label}
+//       </label>
+//       <textarea
+//         id={textareaId}
+//         className={twMerge(
+//           "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
+//           className
+//         )}
+//         {...props}
+//       />
+//     </div>
+//   );
+// };

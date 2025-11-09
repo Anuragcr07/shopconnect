@@ -4,13 +4,14 @@ import { twMerge } from 'tailwind-merge';
 
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
+  labelClassName?: string;
 }
 
-const Textarea: React.FC<TextareaProps> = ({ label, className, ...props }) => {
+const Textarea: React.FC<TextareaProps> = ({ label, labelClassName, className, ...props }) => {
   return (
     <div className="flex flex-col gap-2">
       {label && (
-        <label htmlFor={props.id} className="text-sm font-medium text-gray-700">
+        <label htmlFor={props.id} className={twMerge("text-sm font-medium text-gray-700", labelClassName)}>
           {label}
         </label>
       )}
