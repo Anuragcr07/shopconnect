@@ -1,5 +1,10 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
+@import 'swiper/css';
+@import 'swiper/css/effect-fade';
+@import 'swiper/css/navigation';
+@import 'swiper/css/pagination';
+
 
 
 :root {
