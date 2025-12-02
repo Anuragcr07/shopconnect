@@ -1,3 +1,5 @@
+// prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,7 +10,7 @@ datasource db {
 }
 
 // --------------------------------------
-// NEXT-AUTH MODELS
+// NEXT-AUTH REQUIRED MODELS
 // --------------------------------------
 
 model Account {
@@ -48,7 +50,7 @@ model VerificationToken {
 }
 
 // --------------------------------------
-// APP MODELS (User, Posts, Requests)
+// APP MODELS
 // --------------------------------------
 
 model User {
@@ -60,22 +62,19 @@ model User {
   passwordHash  String?
   role          String    @default("CUSTOMER") // "CUSTOMER" or "SHOPKEEPER"
 
-  // Shopkeeper specific fields
+  // Shopkeeper specific
   latitude      Float?
   longitude     Float?
   shopName      String?
   address       String?
   phone         String?
 
-  // Relations for NextAuth
   accounts      Account[]
   sessions      Session[]
-
-  // Relations for App Logic
   customerPosts CustomerPost[]
   shopRequests  ShopRequest[]
 
-  // Relations for Chat
+  // Chat Relations
   chatsAsCustomer   Conversation[] @relation("CustomerChats")
   chatsAsShopkeeper Conversation[] @relation("ShopkeeperChats")
 }
