@@ -40,9 +40,10 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+// USED FOR EMAIL VERIFICATION FLOW
 model VerificationToken {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  identifier String
+  identifier String   // This will store the user's email
   token      String   @unique
   expires    DateTime
 
@@ -57,7 +58,10 @@ model User {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
   name          String?
   email         String?   @unique
-  emailVerified DateTime?
+  
+  // VERIFICATION FIELD: If null, user is not verified
+  emailVerified DateTime? 
+  
   image         String?
   passwordHash  String?
   role          String    @default("CUSTOMER") // "CUSTOMER" or "SHOPKEEPER"
@@ -69,6 +73,7 @@ model User {
   address       String?
   phone         String?
 
+  // Relations
   accounts      Account[]
   sessions      Session[]
   customerPosts CustomerPost[]
@@ -126,7 +131,6 @@ model Conversation {
   lastMessageAt  DateTime     @default(now())
   createdAt      DateTime     @default(now())
 
-  // Ensures one unique chat per specific post between a specific customer and shopkeeper
   @@unique([customerPostId, shopkeeperId])
 }
 

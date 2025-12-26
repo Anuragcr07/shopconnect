@@ -20,45 +20,34 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsLoading(true);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError(null);
+  setIsLoading(true);
 
-    try {
-      const response = await fetch('/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, password, role, shopName: role === 'SHOPKEEPER' ? shopName : undefined, address: role === 'SHOPKEEPER' ? address : undefined, phone: role === 'SHOPKEEPER' ? phone : undefined }),
-      });
+  try {
+    const response = await fetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, role, shopName, address, phone }),
+    });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Signup failed');
-      }
+    const data = await response.json();
 
-      // Automatically sign in after successful signup
-      const signInResult = await signIn('credentials', {
-        redirect: false,
-        email,
-        password,
-      });
-
-      if (signInResult?.error) {
-        setError("Signup successful, but failed to log in automatically: " + signInResult.error);
-        router.push('/login'); // Redirect to login if auto-login fails
-      } else {
-        router.push(role === 'CUSTOMER' ? '/customer/dashboard' : '/shopkeeper/dashboard');
-      }
-
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
-    } finally {
-      setIsLoading(false);
+    if (!response.ok) {
+      throw new Error(data.message || 'Signup failed');
     }
-  };
+
+    // DON'T signIn() here. Instead, tell user to check email.
+    alert("Verification email sent! Please check your inbox.");
+    router.push('/login');
+
+  } catch (err: any) {
+    setError(err.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4 bg-gray-900 text-gray-100">

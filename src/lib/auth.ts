@@ -14,7 +14,13 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials): Promise<{
+        id: string;
+        name: string | null;
+        email: string | null;
+        image: string | null;
+        role: "CUSTOMER" | "SHOPKEEPER";
+      } | null> {
         if (!credentials?.email || !credentials.password) {
           return null;
         }
@@ -38,7 +44,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           email: user.email,
           image: user.image,
-          role: user.role, // Attach role to session
+          role: user.role as "CUSTOMER" | "SHOPKEEPER", // Ensure correct type
         };
       },
     }),
@@ -58,7 +64,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string;
-        session.user.role = token.role as string;
+        session.user.role = token.role as "CUSTOMER" | "SHOPKEEPER";
       }
       return session;
     },

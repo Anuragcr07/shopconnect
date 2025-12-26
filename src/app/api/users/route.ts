@@ -1,50 +1,54 @@
-// src/app/api/users/route.ts
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { prisma } from '@/lib/prisma';
+import { sendVerificationEmail } from '@/lib/mail';
+import crypto from 'crypto';
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, role, shopName, address, phone } = await req.json();
+    const body = await req.json();
+    const { name, email, password, role, shopName, address, phone } = body;
 
-    if (!name || !email || !password || !role) {
-      return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
-    }
-
-    if (role === 'SHOPKEEPER' && (!shopName || !address || !phone)) {
-      return NextResponse.json({ message: 'Shop name, address, and phone are required for shopkeepers' }, { status: 400 });
-    }
-
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-
+    // 1. Check if user exists
+    const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      return NextResponse.json({ message: 'User with this email already exists' }, { status: 409 });
+      return NextResponse.json({ message: "Email already registered" }, { status: 400 });
     }
 
+    // 2. Hash Password (Schema uses passwordHash)
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // 3. Create User
     const user = await prisma.user.create({
       data: {
         name,
         email,
         passwordHash: hashedPassword,
         role,
-        shopName: role === 'SHOPKEEPER' ? shopName : null,
-        address: role === 'SHOPKEEPER' ? address : null,
-        phone: role === 'SHOPKEEPER' ? phone : null,
-        // Latitude and Longitude for shopkeepers will be set later, e.g., on profile edit or geocoding address
-        // For now, they can be null, or you can add a default (e.g., center of a city)
+        shopName,
+        address,
+        phone,
       },
     });
 
-    // Don't return password hash
-    const { passwordHash, ...userWithoutHash } = user;
+    // 4. Generate & Save Verification Token (Using your schema's VerificationToken model)
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 3600000); // 1 hour from now
 
-    return NextResponse.json(userWithoutHash, { status: 201 });
-  } catch (error) {
-    console.error('Error in /api/users POST:', error);
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    await prisma.verificationToken.create({
+      data: {
+        identifier: email,
+        token: token,
+        expires: expires,
+      },
+    });
+
+    // 5. Send Email
+    await sendVerificationEmail(email, token);
+
+    return NextResponse.json({ message: "Account created. Check your email to verify." }, { status: 201 });
+  } catch (error: any) {
+    console.error("SIGNUP_ERROR", error);
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }
 }
