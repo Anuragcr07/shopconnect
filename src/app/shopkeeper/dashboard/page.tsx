@@ -14,7 +14,7 @@ import ChatWindow from "@/components/ChatWindow";
 // Icons
 import { 
   MapPin, Store, History, Settings, CheckCircle2, 
-  AlertCircle, MessageCircle, Clock, RefreshCcw 
+  AlertCircle, MessageCircle, Clock, RefreshCcw, X 
 } from "lucide-react";
 
 // --- Types ---
@@ -23,7 +23,6 @@ interface CustomerPost {
   title: string;
   description: string;
   customer: { id: string; name: string; email: string };
-  // Only minimal response data needed here
   responses: { shopkeeperId: string }[]; 
   createdAt: string;
 }
@@ -42,7 +41,6 @@ export default function ShopkeeperDashboardPage() {
   
   // --- State ---
   const [requests, setRequests] = useState<CustomerPost[]>([]);
-  // ✅ NEW: Dedicated state for persistent conversations
   const [conversations, setConversations] = useState<Conversation[]>([]);
   
   const [loading, setLoading] = useState(true);
@@ -62,7 +60,6 @@ export default function ShopkeeperDashboardPage() {
         fetchAllData();
         fetchLocation();
 
-        // Poll for updates every 5s
         const intervalId = setInterval(() => {
           fetchAllData(true);
         }, 5000);
@@ -84,24 +81,20 @@ export default function ShopkeeperDashboardPage() {
     } catch (err) { console.error(err); }
   };
 
-  // ✅ Fetch both Requests AND Conversations
   const fetchAllData = async (silent = false) => {
     if (!silent) setLoading(true);
     else setIsRefreshing(true);
     
     try {
-      // 1. Fetch New Requests
       const reqRes = await fetch("/api/shopkeeper/requests");
       if (reqRes.ok) {
         const data = await reqRes.json();
-        // Deduplicate
         const unique = data.filter((item: any, index: number, self: any[]) => 
           index === self.findIndex((t) => t.id === item.id)
         );
         setRequests(unique);
       }
 
-      // 2. Fetch Chat History (Conversations)
       const chatRes = await fetch("/api/chat");
       if (chatRes.ok) {
         const data = await chatRes.json();
@@ -127,6 +120,14 @@ export default function ShopkeeperDashboardPage() {
         alert("Location updated!");
       } catch (e) { console.error(e); }
     });
+  };
+
+  // ✅ Function to remove an image from the local preview state
+  const removeImage = (postId: string, urlToRemove: string) => {
+    setUploadedImages(prev => ({
+      ...prev,
+      [postId]: prev[postId].filter(url => url !== urlToRemove)
+    }));
   };
 
   const handleOpenChat = (postId: string, recipientName: string) => {
@@ -156,7 +157,7 @@ export default function ShopkeeperDashboardPage() {
       if (!response.ok) throw new Error("Failed");
       
       await fetchAllData(); 
-      setActiveTab("history"); // Switch to history tab
+      setActiveTab("history");
 
       if (isAvailable) {
         handleOpenChat(request.id, request.customer.name);
@@ -169,7 +170,6 @@ export default function ShopkeeperDashboardPage() {
   if (status === "loading") return <div className="flex h-screen items-center justify-center">Loading...</div>;
   if (!session || session.user.role !== "SHOPKEEPER") return null;
 
-  // Filter requests that haven't been responded to yet
   const newRequests = requests.filter((r) => !r.responses.some((res) => res.shopkeeperId === session.user.id));
 
   return (
@@ -186,11 +186,10 @@ export default function ShopkeeperDashboardPage() {
       <div className="max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
-          {/* SIDEBAR */}
+          {/* SIDEBAR - Design Unchanged */}
           <div className="hidden lg:block lg:col-span-1">
             <div className="sticky top-8 space-y-6">
               
-              {/* Profile */}
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xl">
@@ -210,7 +209,6 @@ export default function ShopkeeperDashboardPage() {
                 </div>
               </div>
 
-              {/* Nav */}
               <nav className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-2 space-y-1">
                   <button onClick={() => setActiveTab("requests")} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-colors ${activeTab === "requests" ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50"}`}>
@@ -225,7 +223,6 @@ export default function ShopkeeperDashboardPage() {
                 </div>
               </nav>
 
-              {/* Location */}
               <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-2xl p-5 shadow-lg relative overflow-hidden">
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-2 text-gray-300 text-sm font-medium">
@@ -246,7 +243,7 @@ export default function ShopkeeperDashboardPage() {
             </div>
           </div>
 
-          {/* MAIN CONTENT */}
+          {/* MAIN CONTENT - Design Unchanged */}
           <div className="lg:col-span-3 space-y-6">
             
             <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-2">
@@ -276,6 +273,24 @@ export default function ShopkeeperDashboardPage() {
                       
                       <div className="space-y-4">
                          <CameraUploader onUploadComplete={(url) => setUploadedImages(prev => ({ ...prev, [req.id]: [...(prev[req.id] || []), url] }))} />
+                         
+                         {/* ✅ IMAGE PREVIEW LOGIC - Added here to show photos before sending */}
+                         {uploadedImages[req.id]?.length > 0 && (
+                           <div className="flex flex-wrap gap-2 pt-2">
+                             {uploadedImages[req.id].map((url, i) => (
+                               <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                                 <img src={url} className="w-full h-full object-cover" alt="Preview" />
+                                 <button 
+                                   onClick={() => removeImage(req.id, url)}
+                                   className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition-colors"
+                                 >
+                                   <X className="w-3 h-3" />
+                                 </button>
+                               </div>
+                             ))}
+                           </div>
+                         )}
+
                          <Textarea placeholder="Message..." onChange={(e) => setResponseMessage(prev => ({ ...prev, [req.id]: e.target.value }))} />
                       </div>
                       
@@ -289,7 +304,7 @@ export default function ShopkeeperDashboardPage() {
               </div>
             )}
 
-            {/* TAB 2: CHAT HISTORY (Persistent 24/7) */}
+            {/* TAB 2: CHAT HISTORY */}
             {activeTab === "history" && (
               <div className="space-y-4">
                 {conversations.length === 0 && (
