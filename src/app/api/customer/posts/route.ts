@@ -2,12 +2,18 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { Redis } from '@upstash/redis';
 
-// GET: Fetch all posts for the logged-in customer
+// Initialize Redis client
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
+
+// GET: Fetch all posts for the logged-in customer (History)
 export async function GET() {
   const session = await getServerSession(authOptions);
 
-  // Security check: must be logged in as a CUSTOMER
   if (!session || session.user.role !== 'CUSTOMER') {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
@@ -35,7 +41,6 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Ensure we always return an array, even if empty
     return NextResponse.json(customerPosts || [], { status: 200 });
   } catch (error) {
     console.error('DATABASE_ERROR:', error);
@@ -43,7 +48,7 @@ export async function GET() {
   }
 }
 
-// POST: Create a new requirement
+// POST: Create a new requirement and index it in Redis Geospatial
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
 
@@ -52,12 +57,25 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { title, description } = await req.json();
+    const { title, description, latitude, longitude } = await req.json();
 
     if (!title) {
       return NextResponse.json({ message: 'Title is required' }, { status: 400 });
     }
 
+    // 1. Update the customer's location in the User model
+    // This keeps the profile location up-to-date with their last post
+    if (latitude && longitude) {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { 
+            latitude: parseFloat(latitude), 
+            longitude: parseFloat(longitude) 
+        }
+      });
+    }
+
+    // 2. Create the Requirement Post in PostgreSQL
     const newPost = await prisma.customerPost.create({
       data: {
         title,
@@ -67,9 +85,20 @@ export async function POST(req: Request) {
       },
     });
 
+    // 3. INDEX IN REDIS GEOSPATIAL
+    // We add the postId to the 'active_posts' geospatial index.
+    // Important: Redis GEOADD uses the order: Longitude, Latitude.
+    if (latitude && longitude) {
+      await redis.geoadd("active_posts", {
+        longitude: parseFloat(longitude),
+        latitude: parseFloat(latitude),
+        member: newPost.id,
+      });
+    }
+
     return NextResponse.json(newPost, { status: 201 });
   } catch (error) {
-    console.error('CREATE_POST_ERROR:', error);
+    console.error('POST_CREATION_ERROR:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }

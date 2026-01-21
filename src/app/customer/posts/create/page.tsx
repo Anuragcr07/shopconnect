@@ -25,32 +25,41 @@ export default function CreateCustomerPostPage() {
   }, [initialItem]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) return setError("Title is required");
-    
-    setError(null);
-    setIsLoading(true);
+  e.preventDefault();
+  if (!title.trim()) return setError("Title is required");
+  
+  setIsLoading(true);
 
-    try {
-      const response = await fetch('/api/customer/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description }),
-      });
+  // Get current location
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const { latitude, longitude } = position.coords;
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to create post');
+      try {
+        const response = await fetch('/api/customer/posts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            title, 
+            description, 
+            latitude, 
+            longitude 
+          }),
+        });
+
+        if (response.ok) router.push('/customer/dashboard');
+      } catch (err) {
+        setError("Failed to post");
+      } finally {
+        setIsLoading(false);
       }
-
-      router.push('/customer/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please try again.');
-    } finally {
+    },
+    (error) => {
+      setError("Please enable location to find nearby shops.");
       setIsLoading(false);
     }
-  };
-
+  );
+};
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-gray-900 pt-20">
       <Card className="w-full max-w-md p-8 bg-gray-800 border border-blue-700/50 shadow-2xl rounded-2xl">

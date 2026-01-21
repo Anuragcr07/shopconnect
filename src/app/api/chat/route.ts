@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-// ✅ FIX: Import authOptions from your lib folder, NOT the route file
-// This prevents circular dependency errors in Next.js
 import { authOptions } from "@/lib/auth"; 
 import { prisma } from "@/lib/prisma";
 
-// POST: Handle actions (init, send, fetch)
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -23,11 +20,9 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Missing IDs" }, { status: 400 });
       }
 
-      // Check if conversation already exists
-      let conversation = await prisma.conversation.findFirst({
+      let conversation = await prisma.conversation.findUnique({
         where: {
-          customerPostId,
-          shopkeeperId,
+          customerPostId_shopkeeperId: { customerPostId, shopkeeperId },
         },
         include: {
           messages: { orderBy: { createdAt: "asc" } },
@@ -37,20 +32,13 @@ export async function POST(req: Request) {
       });
 
       if (!conversation) {
-        const post = await prisma.customerPost.findUnique({
-          where: { id: customerPostId },
-        });
-
+        const post = await prisma.customerPost.findUnique({ where: { id: customerPostId } });
         if (!post) return NextResponse.json({ error: "Post not found" }, { status: 404 });
 
         conversation = await prisma.conversation.create({
-          data: {
-            customerPostId,
-            shopkeeperId,
-            customerId: post.customerId,
-          },
+          data: { customerPostId, shopkeeperId, customerId: post.customerId },
           include: {
-            messages: true,
+            messages: true, // Will be empty array
             customer: { select: { id: true, name: true } },
             shopkeeper: { select: { id: true, name: true, shopName: true } }
           },
@@ -62,29 +50,21 @@ export async function POST(req: Request) {
 
     // 2. Send Message
     if (action === "send") {
-      if (!conversationId || !content) {
-        return NextResponse.json({ error: "Missing data" }, { status: 400 });
-      }
+      if (!conversationId || !content) return NextResponse.json({ error: "Missing data" }, { status: 400 });
 
-      // Create message and update conversation timestamp in one transaction
-      const [newMessage] = await prisma.$transaction([
-        prisma.message.create({
-          data: {
-            conversationId,
-            senderId: session.user.id,
-            content,
-          },
-        }),
-        prisma.conversation.update({
-          where: { id: conversationId },
-          data: { lastMessageAt: new Date() },
-        }),
-      ]);
+      const newMessage = await prisma.message.create({
+        data: { conversationId, senderId: session.user.id, content },
+      });
+
+      await prisma.conversation.update({
+        where: { id: conversationId },
+        data: { lastMessageAt: new Date() },
+      });
 
       return NextResponse.json(newMessage);
     }
 
-    // 3. Fetch New Messages (Polling)
+    // 3. Fetch New Messages
     if (action === "fetch") {
       const { after } = body;
       if (!conversationId) return NextResponse.json({ error: "Missing ID" }, { status: 400 });
@@ -92,7 +72,6 @@ export async function POST(req: Request) {
       const messages = await prisma.message.findMany({
         where: {
           conversationId,
-          // Only fetch messages newer than the last one we have
           ...(after && { createdAt: { gt: new Date(after) } }),
         },
         orderBy: { createdAt: "asc" },
@@ -101,44 +80,36 @@ export async function POST(req: Request) {
       return NextResponse.json(messages || []);
     }
 
+    // 4. Mark Read (Fixes the 400 Error)
+    if (action === "markRead") {
+      if (!conversationId) return NextResponse.json({ error: "Missing ID" }, { status: 400 });
+      await prisma.message.updateMany({
+        where: { conversationId, senderId: { not: session.user.id }, read: false },
+        data: { read: true },
+      });
+      return NextResponse.json({ success: true });
+    }
+
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error: any) {
-    console.error("CHAT_POST_ERROR:", error);
-    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+    console.error("CHAT_ERROR:", error);
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }
 
-// GET: Fetch all conversations for the user
 export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    if (!session || !session.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const userId = session.user.id;
-    const role = session.user.role;
-
-    const conversations = await prisma.conversation.findMany({
-      where: role === "SHOPKEEPER" 
-        ? { shopkeeperId: userId } 
-        : { customerId: userId },
-      include: {
-        customer: { select: { id: true, name: true } },
-        shopkeeper: { select: { id: true, name: true, shopName: true } },
-        customerPost: { select: { id: true, title: true } },
-        messages: {
-          orderBy: { createdAt: "desc" },
-          take: 1, // Just for previewing the last message
-        },
-      },
-      orderBy: { lastMessageAt: "desc" },
-    });
-
-    return NextResponse.json(conversations || []);
-  } catch (error: any) {
-    console.error("CHAT_GET_ERROR:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-  }
+  const conversations = await prisma.conversation.findMany({
+    where: session.user.role === "SHOPKEEPER" ? { shopkeeperId: session.user.id } : { customerId: session.user.id },
+    include: {
+      customer: { select: { name: true } },
+      shopkeeper: { select: { name: true, shopName: true } },
+      customerPost: { select: { title: true } },
+      messages: { orderBy: { createdAt: "desc" }, take: 1 },
+    },
+    orderBy: { lastMessageAt: "desc" },
+  });
+  return NextResponse.json(conversations);
 }
