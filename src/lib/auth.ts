@@ -3,7 +3,7 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
-import bcrypt from "bcryptjs"; // You'll need to install bcryptjs
+import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -14,41 +14,41 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials): Promise<{
-        id: string;
-        name: string | null;
-        email: string | null;
-        image: string | null;
-        role: "CUSTOMER" | "SHOPKEEPER";
-      } | null> {
+      async authorize(credentials) {
         if (!credentials?.email || !credentials.password) {
-          return null;
+          throw new Error("Email and password are required");
         }
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
 
-        if (!user || !user.passwordHash) { // Assuming you'll add passwordHash to User model
-          return null;
+        // 1. Check if user exists
+        if (!user || !user.passwordHash) {
+          throw new Error("No user found with this email");
         }
 
+        // 2. Check if password is correct
         const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
-
         if (!isValid) {
-          return null;
+          throw new Error("Invalid password");
         }
 
+        // If emailVerified is null in your database, it means they haven't clicked the link.
+        if (!user.emailVerified) {
+          throw new Error("PLEASE_VERIFY_EMAIL");
+        }
+
+        // 4. Return user object if all checks pass
         return {
           id: user.id,
           name: user.name,
           email: user.email,
           image: user.image,
-          role: user.role as "CUSTOMER" | "SHOPKEEPER", // Ensure correct type
+          role: user.role as "CUSTOMER" | "SHOPKEEPER",
         };
       },
     }),
-    // You can add more providers like Google, Facebook etc.
   ],
   session: {
     strategy: "jwt",
@@ -70,7 +70,7 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    signIn: "/login", // Custom sign-in page
+    signIn: "/login",
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
