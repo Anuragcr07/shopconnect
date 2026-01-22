@@ -1,15 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // ✅ FIX: This tells Next.js to ignore these packages during bundling, 
-  // which fixes the "TypeError: utils.typeOf is not a function" error.
-  serverExternalPackages: [
-    "puppeteer",
-    "puppeteer-extra",
-    "puppeteer-extra-plugin-stealth",
-  ],
 
   images: {
+    unoptimized: true, // ✅ Fixes the "sharp" installation error on Windows during SST deploy
     remotePatterns: [
       {
         protocol: "https",
@@ -19,13 +13,21 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com", // Added for your Cloudinary setup
+      },
     ],
-    unoptimized: true,
   },
 
-  // ✅ React Compiler usually belongs in experimental
+  serverExternalPackages: [
+    "puppeteer",
+    "puppeteer-extra",
+    "puppeteer-extra-plugin-stealth",
+    "sharp",
+  ],
+
   experimental: {
-    // Add supported experimental options here if needed
   },
 };
 

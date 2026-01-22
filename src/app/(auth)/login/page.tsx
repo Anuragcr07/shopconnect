@@ -1,25 +1,38 @@
 "use client";
 
+import { Suspense, useState, useEffect } from 'react';
+import { signIn } from 'next-auth/react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+
+// UI Components
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
-import StatusModal from '@/components/ui/StatusModal'; // Import our new modal
-import { signIn } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import StatusModal from '@/components/ui/StatusModal';
 
-export default function LoginPage() {
+/**
+ * LOGIC COMPONENT
+ * This component handles the actual form, hooks, and search params.
+ */
+function LoginFormContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
   // Modal State
-  const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', message: '', type: 'info' as 'info' | 'success' | 'error' });
+  const [modalConfig, setModalConfig] = useState({ 
+    isOpen: false, 
+    title: '', 
+    message: '', 
+    type: 'info' as 'info' | 'success' | 'error' 
+  });
 
   const router = useRouter();
   const searchParams = useSearchParams();
+  
+  // Safely get search params
   const callbackUrl = searchParams.get('callbackUrl') || '/';
   const isVerified = searchParams.get('verified');
 
@@ -65,7 +78,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4 bg-gray-900 text-gray-100">
+    <>
       {/* Our Modal */}
       <StatusModal 
         isOpen={modalConfig.isOpen}
@@ -108,12 +121,31 @@ export default function LoginPage() {
           </Button>
         </form>
         <p className="text-center text-gray-400 mt-6">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/signup" className="text-blue-400 hover:underline hover:text-blue-300 transition-colors">
             Sign Up
           </Link>
         </p>
       </Card>
+    </>
+  );
+}
+
+/**
+ * MAIN PAGE COMPONENT
+ * This is the default export. It wraps the content in Suspense to fix the build error.
+ */
+export default function LoginPage() {
+  return (
+    <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4 bg-gray-900 text-gray-100">
+      <Suspense fallback={
+        <div className="flex flex-col items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+          <p className="text-gray-400">Loading Login...</p>
+        </div>
+      }>
+        <LoginFormContent />
+      </Suspense>
     </div>
   );
 }

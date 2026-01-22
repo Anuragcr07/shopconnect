@@ -5,10 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { Redis } from '@upstash/redis';
 
 // Initialize Redis client
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+const redis = Redis.fromEnv();
 
 // GET: Fetch all posts for the logged-in customer (History)
 export async function GET() {
