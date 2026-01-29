@@ -2,34 +2,40 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const token = searchParams.get('token');
-  const email = searchParams.get('email');
+  try {
+    const { searchParams } = new URL(req.url);
+    const token = searchParams.get('token');
+    const email = searchParams.get('email');
 
-  if (!token || !email) {
-    return NextResponse.json({ message: "Invalid verification link" }, { status: 400 });
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+    if (!token || !email) {
+      return NextResponse.redirect(`${baseUrl}/login?error=InvalidLink`);
+    }
+
+    const verifiedToken = await prisma.verificationToken.findFirst({
+      where: { identifier: email, token: token }
+    });
+
+    if (!verifiedToken || verifiedToken.expires < new Date()) {
+      return NextResponse.redirect(`${baseUrl}/login?error=Expired`);
+    }
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { email: email },
+        data: { emailVerified: new Date() }
+      }),
+      prisma.verificationToken.delete({
+        where: { id: verifiedToken.id }
+      })
+    ]);
+
+    return NextResponse.redirect(`${baseUrl}/login?verified=true`);
+
+  } catch (error) {
+    console.error("Verification error:", error);
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    return NextResponse.redirect(`${baseUrl}/login?error=ServerError`);
   }
-
-  // 1. Find the token
-  const verifiedToken = await prisma.verificationToken.findFirst({
-    where: { identifier: email, token: token }
-  });
-
-  if (!verifiedToken || verifiedToken.expires < new Date()) {
-    return NextResponse.json({ message: "Token invalid or expired" }, { status: 400 });
-  }
-
-  // 2. Update User emailVerified
-  await prisma.user.update({
-    where: { email: email },
-    data: { emailVerified: new Date() }
-  });
-
-  // 3. Delete the used token
-  await prisma.verificationToken.delete({
-    where: { id: verifiedToken.id }
-  });
-
-  // 4. Redirect to login with success message
-  return NextResponse.redirect(new URL('/login?verified=true', req.url));
 }
