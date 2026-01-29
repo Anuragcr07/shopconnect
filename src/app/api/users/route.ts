@@ -15,40 +15,52 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Email already registered" }, { status: 400 });
     }
 
-    // 2. Hash Password (Schema uses passwordHash)
+    // 2. Hash Password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 3. Create User
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        passwordHash: hashedPassword,
-        role,
-        shopName,
-        address,
-        phone,
-      },
-    });
-
-    // 4. Generate & Save Verification Token (Using your schema's VerificationToken model)
+    // 3. Create User & Token in a Transaction (Safer)
     const token = crypto.randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 3600000); // 1 hour from now
+    const expires = new Date(Date.now() + 3600000); // 1 hour
 
-    await prisma.verificationToken.create({
-      data: {
-        identifier: email,
-        token: token,
-        expires: expires,
-      },
-    });
+    // We use a transaction to ensure both happen or neither happen
+    await prisma.$transaction([
+      prisma.user.create({
+        data: {
+          name,
+          email,
+          passwordHash: hashedPassword,
+          role,
+          shopName,
+          address,
+          phone,
+        },
+      }),
+      // Delete any existing tokens for this email and create a new one
+      prisma.verificationToken.deleteMany({ where: { identifier: email } }),
+      prisma.verificationToken.create({
+        data: {
+          identifier: email,
+          token: token,
+          expires: expires,
+        },
+      })
+    ]);
 
-    // 5. Send Email
+    // 4. Send Email via Resend
+    // Important: On Resend Free Tier, you can only send to your own registered email 
+    // until you verify a custom domain!
     await sendVerificationEmail(email, token);
 
     return NextResponse.json({ message: "Account created. Check your email to verify." }, { status: 201 });
+
   } catch (error: any) {
-    console.error("SIGNUP_ERROR", error);
+    console.error("SIGNUP_ERROR:", error);
+    
+    // Check for specific Prisma errors
+    if (error.code === 'P2002') {
+      return NextResponse.json({ message: "Email already exists" }, { status: 400 });
+    }
+
     return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }
 }

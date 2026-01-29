@@ -17,6 +17,8 @@
     "animejs": "^3.2.2",
     "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
+    "crypto": "^1.0.1",
+    "googleapis": "^170.1.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.555.0",
     "mongodb": "^6.20.0",
@@ -29,6 +31,7 @@
     "react-dropzone": "^14.3.8",
     "react-leaflet": "^5.0.0",
     "react-webcam": "^7.2.0",
+    "resend": "^6.9.1",
     "sharp": "^0.34.5",
     "swiper": "^12.0.3",
     "tailwind-merge": "^3.3.1"
