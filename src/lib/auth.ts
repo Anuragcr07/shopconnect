@@ -1,4 +1,3 @@
-// src/lib/auth.ts
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -23,23 +22,19 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email },
         });
 
-        // 1. Check if user exists
         if (!user || !user.passwordHash) {
           throw new Error("No user found with this email");
         }
 
-        // 2. Check if password is correct
         const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!isValid) {
           throw new Error("Invalid password");
         }
 
-        // If emailVerified is null in your database, it means they haven't clicked the link.
         if (!user.emailVerified) {
           throw new Error("PLEASE_VERIFY_EMAIL");
         }
 
-        // 4. Return user object if all checks pass
         return {
           id: user.id,
           name: user.name,
@@ -54,6 +49,15 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
+    // --- ADD THIS REDIRECT CALLBACK ---
+    async redirect({ url, baseUrl }) {
+      // Allows relative callback URLs (e.g. /login)
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // Allows callback URLs on the same origin
+      else if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
+    // ----------------------------------
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
