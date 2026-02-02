@@ -38,11 +38,10 @@ const Navbar: React.FC = () => {
                 Dashboard
               </Button>
             </Link>
- // src/components/Navbar.tsx
 
 <Button 
   onClick={() => signOut({ 
-    callbackUrl: process.env.NEXT_PUBLIC_APP_URL || window.location.origin 
+        callbackUrl: window.location.origin 
   })} 
   variant="outline" 
   className="text-white border-blue-500 hover:bg-blue-600 hover:border-blue-600 transition-colors px-4 py-2 rounded-md"
