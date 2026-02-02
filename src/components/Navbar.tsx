@@ -38,9 +38,13 @@ const Navbar: React.FC = () => {
                 Dashboard
               </Button>
             </Link>
-            <Button onClick={() => signOut()} variant="outline" className="text-white border-blue-500 hover:bg-blue-600 hover:border-blue-600 transition-colors px-4 py-2 rounded-md">
-              Sign Out
-            </Button>
+            <Button 
+  onClick={() => signOut({ callbackUrl: '/' })} 
+  variant="outline" 
+  className="text-white border-blue-500 hover:bg-blue-600 hover:border-blue-600 transition-colors px-4 py-2 rounded-md"
+>
+  Sign Out
+</Button>
           </>
         ) : (
           <>
