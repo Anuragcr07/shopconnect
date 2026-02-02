@@ -39,9 +39,10 @@ const Navbar: React.FC = () => {
               </Button>
             </Link>
 
+
 <Button 
   onClick={() => signOut({ 
-        callbackUrl: window.location.origin 
+    callbackUrl: 'https://shopconnect-07.onrender.com' 
   })} 
   variant="outline" 
   className="text-white border-blue-500 hover:bg-blue-600 hover:border-blue-600 transition-colors px-4 py-2 rounded-md"
