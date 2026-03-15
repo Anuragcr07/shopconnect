@@ -1,8 +1,22 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { NextAuthOptions } from "next-auth";
+import { NextAuthOptions, DefaultSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
+
+// Update the Session types to include id and role
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      role: "CUSTOMER" | "SHOPKEEPER";
+    } & DefaultSession["user"];
+  }
+
+  interface User {
+    role: string;
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -49,24 +63,20 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
-    // --- ADD THIS REDIRECT CALLBACK ---
     async redirect({ url, baseUrl }) {
-      // Allows relative callback URLs (e.g. /login)
       if (url.startsWith("/")) return `${baseUrl}${url}`;
-      // Allows callback URLs on the same origin
       else if (new URL(url).origin === baseUrl) return url;
       return baseUrl;
     },
-    // ----------------------------------
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
+        token.role = user.role as "CUSTOMER" | "SHOPKEEPER";
       }
       return token;
     },
     async session({ session, token }) {
-      if (token) {
+      if (token && session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as "CUSTOMER" | "SHOPKEEPER";
       }

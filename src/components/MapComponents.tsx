@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import type L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// Dynamically import react-leaflet components (client-only)
 const MapContainer = dynamic(
   () => import("react-leaflet").then((m) => m.MapContainer),
   { ssr: false }

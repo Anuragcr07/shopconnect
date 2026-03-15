@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
-import Button from '@/components/ui/Button'; // Assuming your Button component supports Tailwind classes
+import Button from '@/components/ui/Button'; 
 
 const Navbar: React.FC = () => {
   const { data: session } = useSession();
@@ -11,7 +11,6 @@ const Navbar: React.FC = () => {
   return (
     <nav className="bg-gray-800 text-white shadow-lg py-4 px-6 md:px-10 flex justify-between items-center fixed w-full z-20 top-0 border-b border-blue-700/50">
       <Link href="/" className="flex items-center space-x-2">
-        {/* You can replace this SVG with your actual logo component or an Image if you have one */}
         <svg
           className="w-8 h-8 text-blue-400"
           fill="none"
