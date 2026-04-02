@@ -39,7 +39,6 @@ export default function CustomerDashboardPage() {
     }
   };
 
-  // ✅ NEW: DIRECTION FEATURE LOGIC
   const handleGetDirections = async (shopLat: number, shopLng: number) => {
     // 1. Check if browser supports GPS
     if (!navigator.geolocation) {

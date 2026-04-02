@@ -171,7 +171,7 @@ export default function ChatWindow({
             placeholder="Type a message..."
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
           />
-          <Button onClick={handleSend} disabled={sending} className="rounded-full px-4">
+          <Button onClick={handleSend} disabled={sending} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full px-4">
             Send
           </Button>
         </div>
