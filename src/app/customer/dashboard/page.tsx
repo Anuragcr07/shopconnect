@@ -117,7 +117,7 @@ export default function CustomerDashboardPage() {
                       📍 Map
                     </Button>
 
-                    {/* ✅ NEW DIRECTIONS BUTTON */}
+                
                     <Button 
                       variant="outline" 
                       className="text-xs border-green-500/50 text-green-400 hover:bg-green-900/20" 
