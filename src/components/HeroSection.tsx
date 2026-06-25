@@ -1,73 +1,73 @@
-"use client";
-
-import { useEffect, useRef } from "react";
-import anime from "animejs";
+import Link from "next/link";
+import { ArrowRight, Check, MapPin, MessageCircle, Search, Store } from "lucide-react";
 
 export default function HeroSection() {
-  const textRef = useRef<HTMLDivElement | null>(null);
-  const metricsRef = useRef<HTMLDivElement | null>(null);
-
-  // Anime.js fade-up animation for text and metrics
-  useEffect(() => {
-    if (!textRef.current || !metricsRef.current) return;
-
-    anime({
-      targets: textRef.current.querySelectorAll(".fade-up-text"),
-      translateY: [30, 0],
-      opacity: [0, 1],
-      delay: anime.stagger(150),
-      easing: "easeOutExpo",
-      duration: 1000,
-    });
-
-    anime({
-      targets: metricsRef.current.querySelectorAll(".fade-up-metric"),
-      translateY: [40, 0],
-      opacity: [0, 1],
-      delay: anime.stagger(200, { start: 500 }), // Delay metrics slightly after text
-      easing: "easeOutQuad",
-      duration: 800,
-    });
-  }, []);
-
   return (
-    <section className="relative w-full h-[70vh] bg-gradient-to-br from-gray-900 to-blue-900 text-white flex flex-col justify-center items-center p-8 overflow-hidden">
-      {/* Background pattern for dashboard feel */}
-      <div className="absolute inset-0 z-0 opacity-10" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 0h-2v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-      }}></div>
+    <section className="relative isolate overflow-hidden bg-gradient-to-b from-indigo-50 via-white to-white py-16 sm:py-20 lg:py-28">
+      <div className="soft-grid absolute inset-0 -z-20 opacity-60" />
+      <div className="absolute left-1/2 top-0 -z-10 h-96 w-96 -translate-x-1/2 rounded-full bg-indigo-300/30 blur-3xl sm:h-[34rem] sm:w-[34rem]" />
 
-      <div ref={textRef} className="relative z-10 text-center mb-12">
-        <h1 className="fade-up-text text-5xl md:text-6xl font-extrabold mb-4 drop-shadow-lg leading-tight">
-          Welcome to Your <span className="text-blue-400">LocalTrade Hub</span>
-        </h1>
-        <p className="fade-up-text text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">
-          Access real-time insights, manage your local connections, and grow your business with our intuitive dashboard.
-        </p>
+      <div className="page-shell grid items-center gap-14 lg:grid-cols-[1.05fr_.95fr] lg:gap-16">
+        <div className="text-center lg:text-left">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white/80 px-3.5 py-2 text-xs font-bold text-indigo-700 shadow-sm sm:text-sm">
+            <MapPin className="size-4" /> Shopping nearby, made simple
+          </div>
+          <h1 className="text-balance text-4xl font-black leading-[1.08] tracking-[-0.04em] text-slate-950 sm:text-6xl lg:text-7xl">
+            Find it nearby.<br />
+            <span className="bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">Buy it better.</span>
+          </h1>
+          <p className="mx-auto mt-6 max-w-2xl text-pretty text-base leading-7 text-slate-600 sm:text-lg sm:leading-8 lg:mx-0">
+            Tell local shops what you need once. Compare real offers, chat directly, and choose the best option without calling store after store.
+          </p>
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+            <Link href="/signup" className="inline-flex min-h-13 items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3.5 font-bold text-white shadow-xl shadow-indigo-200 transition hover:-translate-y-0.5 hover:bg-indigo-700">
+              Post what you need <ArrowRight className="size-4" />
+            </Link>
+            <Link href="/#how-it-works" className="inline-flex min-h-13 items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3.5 font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50">
+              See how it works
+            </Link>
+          </div>
+          <div className="mt-7 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm font-medium text-slate-500 lg:justify-start">
+            <span className="flex items-center gap-1.5"><Check className="size-4 text-emerald-500" /> Free to post</span>
+            <span className="flex items-center gap-1.5"><Check className="size-4 text-emerald-500" /> Local responses</span>
+            <span className="flex items-center gap-1.5"><Check className="size-4 text-emerald-500" /> Direct chat</span>
+          </div>
+        </div>
+
+        <div className="relative mx-auto w-full max-w-lg">
+          <div className="glass-panel relative rounded-[2rem] p-4 sm:p-6">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">Live request</p>
+                <h2 className="mt-1 text-lg font-extrabold text-slate-900">Sony wireless headphones</h2>
+              </div>
+              <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">3 offers</span>
+            </div>
+
+            <div className="space-y-3">
+              {[
+                { shop: "City Electronics", detail: "In stock · ₹4,299", color: "bg-indigo-600", icon: Store },
+                { shop: "Sound Point", detail: "Pickup today · ₹4,450", color: "bg-violet-500", icon: MessageCircle },
+                { shop: "Digital Corner", detail: "1.2 km away · ₹4,390", color: "bg-orange-500", icon: MapPin },
+              ].map(({ shop, detail, color, icon: Icon }) => (
+                <div key={shop} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3.5 shadow-sm sm:p-4">
+                  <span className={`grid size-11 shrink-0 place-items-center rounded-xl text-white ${color}`}><Icon className="size-5" /></span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-bold text-slate-900">{shop}</p>
+                    <p className="mt-0.5 truncate text-sm text-slate-500">{detail}</p>
+                  </div>
+                  <ArrowRight className="size-4 shrink-0 text-slate-300" />
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 flex items-center gap-3 rounded-2xl bg-slate-950 p-4 text-white">
+              <span className="grid size-10 place-items-center rounded-xl bg-white/10"><Search className="size-5" /></span>
+              <div><p className="text-sm font-bold">One request. Multiple options.</p><p className="text-xs text-slate-400">You stay in control.</p></div>
+            </div>
+          </div>
+          <div className="absolute -bottom-6 -right-5 -z-10 h-32 w-32 rounded-full bg-orange-300/40 blur-2xl" />
+        </div>
       </div>
-
-      {/* Dashboard Metrics Cards */}
-      <div ref={metricsRef} className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
-        <div className="fade-up-metric bg-white/10 backdrop-blur-md rounded-xl p-6 shadow-2xl border border-blue-700/30 flex flex-col items-center justify-center transition-all duration-300 hover:scale-105 hover:bg-white/15">
-          <h3 className="text-5xl font-bold text-white mb-2">1,245</h3>
-          <p className="text-blue-200 text-lg">Active Local Shops</p>
-        </div>
-        <div className="fade-up-metric bg-white/10 backdrop-blur-md rounded-xl p-6 shadow-2xl border border-blue-700/30 flex flex-col items-center justify-center transition-all duration-300 hover:scale-105 hover:bg-white/15">
-          <h3 className="text-5xl font-bold text-white mb-2">8,700+</h3>
-          <p className="text-blue-200 text-lg">Daily User Inquiries</p>
-        </div>
-        <div className="fade-up-metric bg-white/10 backdrop-blur-md rounded-xl p-6 shadow-2xl border border-blue-700/30 flex flex-col items-center justify-center transition-all duration-300 hover:scale-105 hover:bg-white/15">
-          <h3 className="text-5xl font-bold text-white mb-2">4.8/5</h3>
-          <p className="text-blue-200 text-lg">Average Shop Rating</p>
-        </div>
-      </div>
-
-      <button
-        onClick={() => alert("Dashboard Login or Signup!")}
-        className="relative z-10 mt-16 bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-full font-semibold shadow-lg transition-transform hover:scale-105 transform active:scale-95 text-xl"
-      >
-        Go to Dashboard
-      </button>
     </section>
   );
 }

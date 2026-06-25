@@ -49,7 +49,7 @@ const nextConfig: NextConfig = {
           // Disables browser features you don't need
           {
             key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+            value: "camera=(self), microphone=(), geolocation=(self), payment=(), usb=()",
           },
           // Content Security Policy — restricts what scripts/styles can load
           // IMPORTANT: Adjust 'script-src' if you add third-party scripts later
@@ -60,9 +60,9 @@ const nextConfig: NextConfig = {
               // next.js needs 'unsafe-inline' and 'unsafe-eval' in dev; tighten for prod if possible
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://source.unsplash.com",
+              "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://source.unsplash.com https://*.basemaps.cartocdn.com https://*.openstreetmap.org",
               "font-src 'self' data:",
-              "connect-src 'self'",
+              "connect-src 'self' https://api.cloudinary.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

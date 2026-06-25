@@ -1,4 +1,3 @@
-// src/components/ui/Card.tsx
 import React from 'react';
 import { twMerge } from 'tailwind-merge';
 
@@ -10,7 +9,7 @@ const Card: React.FC<CardProps> = ({ children, className, ...props }) => {
   return (
     <div
       className={twMerge(
-        'bg-white p-6 rounded-xl shadow-md border border-gray-100',
+        'rounded-3xl border border-slate-200 bg-white p-5 text-slate-900 shadow-sm md:p-6',
         className
       )}
       {...props}

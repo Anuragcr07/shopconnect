@@ -4,13 +4,10 @@ import PriceComparisonSection from "@/components/PriceComparisonSection";
 
 export default function Home() {
   return (
-    <main className="flex flex-col items-center justify-center w-full bg-white">
+    <div className="flex w-full flex-col overflow-hidden bg-white">
       <HeroSection />
-
-
       <PriceComparisonSection />
-
       <HowItWorksSection />
-    </main>
+    </div>
   );
 }

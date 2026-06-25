@@ -1,19 +1,15 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import { useRef, useState } from "react";
+import Image from "next/image";
 import Webcam from "react-webcam";
+import { Camera, Check, ImagePlus, RotateCcw } from "lucide-react";
 
-interface CameraUploaderProps {
-  onUploadComplete: (url: string) => void;
-}
+interface CameraUploaderProps { onUploadComplete: (url: string) => void; }
 
-const videoConstraints = {
-  width: 640,
-  height: 480,
-  facingMode: "environment",
-};
+const videoConstraints = { width: 640, height: 480, facingMode: "environment" };
 
-const CameraUploader: React.FC<CameraUploaderProps> = ({ onUploadComplete }) => {
+export default function CameraUploader({ onUploadComplete }: CameraUploaderProps) {
   const webcamRef = useRef<Webcam>(null);
   const [image, setImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -29,92 +25,29 @@ const CameraUploader: React.FC<CameraUploaderProps> = ({ onUploadComplete }) => 
     if (!image) return;
     setUploading(true);
     try {
-      const blob = await fetch(image).then((res) => res.blob());
-      const file = new File([blob], "capture.jpg", { type: "image/jpeg" });
-
+      const blob = await fetch(image).then((response) => response.blob());
       const formData = new FormData();
-      formData.append("file", file);
-      formData.append(
-        "upload_preset",
-        process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "shop_unsigned_preset"
-      );
-
+      formData.append("file", new File([blob], "capture.jpg", { type: "image/jpeg" }));
+      formData.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "shop_unsigned_preset");
       const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-
-      if (data.secure_url) {
-        onUploadComplete(data.secure_url);
-        alert("✅ Image uploaded successfully!");
-        setImage(null);
-      } else {
-        alert("❌ Upload failed. Try again.");
-      }
-    } catch (err) {
-      console.error("Error uploading to Cloudinary:", err);
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, { method: "POST", body: formData });
+      const data = await response.json();
+      if (!data.secure_url) throw new Error("Upload failed");
+      onUploadComplete(data.secure_url);
+      setImage(null);
+    } catch (error) {
+      console.error("Error uploading to Cloudinary:", error);
+      alert("Photo upload failed. Please try again.");
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center gap-3 border border-gray-200 rounded-lg p-4">
-      {!showCamera && !image && (
-        <button
-          onClick={() => setShowCamera(true)}
-          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-        >
-          📷 Open Camera
-        </button>
-      )}
-
-      {showCamera && (
-        <div className="flex flex-col items-center gap-3">
-          <Webcam
-            ref={webcamRef}
-            audio={false}
-            screenshotFormat="image/jpeg"
-            videoConstraints={videoConstraints}
-            className="rounded-lg border border-gray-300"
-          />
-          <button
-            onClick={capture}
-            className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-          >
-            Capture
-          </button>
-        </div>
-      )}
-
-      {image && (
-        <div className="flex flex-col items-center gap-3">
-          <img
-            src={image}
-            alt="Captured"
-            className="w-48 h-48 object-cover rounded-lg border border-gray-300"
-          />
-          <div className="flex gap-3">
-            <button
-              onClick={() => setImage(null)}
-              className="px-4 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500"
-            >
-              Retake
-            </button>
-            <button
-              onClick={uploadToCloudinary}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-              disabled={uploading}
-            >
-              {uploading ? "Uploading..." : "Upload"}
-            </button>
-          </div>
-        </div>
-      )}
+    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white p-4">
+      {!showCamera && !image && <button type="button" onClick={() => setShowCamera(true)} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-indigo-50 px-4 py-2 text-sm font-bold text-indigo-700 transition hover:bg-indigo-100"><ImagePlus className="size-4" /> Add a product photo</button>}
+      {showCamera && <div className="flex w-full flex-col items-center gap-3"><Webcam ref={webcamRef} audio={false} screenshotFormat="image/jpeg" videoConstraints={videoConstraints} className="w-full rounded-2xl border border-slate-200" /><button type="button" onClick={capture} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700"><Camera className="size-4" /> Capture</button></div>}
+      {image && <div className="flex flex-col items-center gap-3"><Image src={image} alt="Captured product" width={192} height={192} unoptimized className="size-48 rounded-2xl border border-slate-200 object-cover" /><div className="flex gap-3"><button type="button" onClick={() => setImage(null)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"><RotateCcw className="size-4" /> Retake</button><button type="button" onClick={uploadToCloudinary} disabled={uploading} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-60">{uploading ? "Uploading…" : <><Check className="size-4" /> Use photo</>}</button></div></div>}
     </div>
   );
-};
-
-export default CameraUploader;
+}

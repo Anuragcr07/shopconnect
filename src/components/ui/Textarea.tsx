@@ -1,4 +1,3 @@
-// src/components/ui/Textarea.tsx
 import React from 'react';
 import { twMerge } from 'tailwind-merge';
 
@@ -11,13 +10,13 @@ const Textarea: React.FC<TextareaProps> = ({ label, labelClassName, className, .
   return (
     <div className="flex flex-col gap-2">
       {label && (
-        <label htmlFor={props.id} className={twMerge("text-sm font-medium text-gray-700", labelClassName)}>
+        <label htmlFor={props.id} className={twMerge('text-sm font-bold text-slate-700', labelClassName)}>
           {label}
         </label>
       )}
       <textarea
         className={twMerge(
-          'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-blue focus:border-transparent outline-none shadow-sm transition-shadow duration-200 resize-y',
+          'min-h-28 w-full resize-y rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100',
           className
         )}
         {...props}

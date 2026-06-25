@@ -17,6 +17,12 @@ export async function GET() {
     const customerPosts = await prisma.customerPost.findMany({
       where: { customerId: session.user.id },
       include: {
+        customer: {
+          select: {
+            latitude: true,
+            longitude: true,
+          },
+        },
         responses: {
           include: {
             shopkeeper: {
@@ -59,12 +65,26 @@ export async function POST(req: Request) {
     }
 
     // Convert coordinates and validate they are valid numbers
-    const lat = parseFloat(latitude);
-    const lng = parseFloat(longitude);
-    const isValidLocation = !isNaN(lat) && !isNaN(lng);
+    let lat = parseFloat(latitude);
+    let lng = parseFloat(longitude);
+    let isValidLocation = !isNaN(lat) && !isNaN(lng);
 
-    // 1. Update the customer's location in the User model
-    if (isValidLocation) {
+    // If client didn't send valid coordinates, try to fall back to user's saved location
+    if (!isValidLocation) {
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { latitude: true, longitude: true },
+      });
+      if (user && user.latitude !== null && user.longitude !== null) {
+        lat = user.latitude;
+        lng = user.longitude;
+        isValidLocation = true;
+      }
+    }
+
+    // 1. Update the customer's location in the User model if new coordinates were provided
+    const hasNewLocation = !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude));
+    if (hasNewLocation && isValidLocation) {
       await prisma.user.update({
         where: { id: session.user.id },
         data: {
@@ -99,11 +119,11 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(newPost, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('POST_CREATION_ERROR:', error);
     return NextResponse.json({ 
       message: 'Internal server error', 
-      details: error.message 
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }

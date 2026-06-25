@@ -1,101 +1,91 @@
 "use client";
 
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Card from '@/components/ui/Card';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { Textarea } from '@/components/ui/Textarea';
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { ArrowLeft, LocateFixed, Send, ShieldCheck } from "lucide-react";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 
 export default function CreateCustomerPostPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialItem = searchParams.get('item');
-
-  const [title, setTitle] = useState(initialItem || '');
-  const [description, setDescription] = useState('');
+  const initialItem = searchParams.get("item");
+  const [title, setTitle] = useState(initialItem || "");
+  const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (initialItem) {
       setTitle(initialItem);
-      setDescription(`I am looking for a ${initialItem}. Please let me know the price and if it is currently in stock.`);
+      setDescription(`I am looking for ${initialItem}. Please let me know the price and whether it is currently in stock.`);
     }
   }, [initialItem]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!title.trim()) return setError("Title is required");
-  
-  setIsLoading(true);
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!title.trim()) return setError("Tell us what you are looking for.");
+    setError(null);
+    setIsLoading(true);
 
-  // Get current location
-  navigator.geolocation.getCurrentPosition(
-    async (position) => {
-      const { latitude, longitude } = position.coords;
-
+    const submitPost = async (lat?: number, lng?: number) => {
       try {
-        const response = await fetch('/api/customer/posts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            title, 
-            description, 
-            latitude, 
-            longitude 
+        const response = await fetch("/api/customer/posts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            description,
+            latitude: lat !== undefined ? lat : null,
+            longitude: lng !== undefined ? lng : null,
           }),
         });
-
-        if (response.ok) router.push('/customer/dashboard');
-      } catch (err) {
-        setError("Failed to post");
-      } finally {
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || "Could not create your request");
+        }
+        router.push("/customer/dashboard");
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "We could not post your request. Please try again.");
         setIsLoading(false);
       }
-    },
-    (error) => {
-      setError("Please enable location to find nearby shops.");
-      setIsLoading(false);
-    }
-  );
-};
-  return (
-    <div className="flex items-center justify-center min-h-screen p-4 bg-gray-900 pt-20">
-      <Card className="w-full max-w-md p-8 bg-gray-800 border border-blue-700/50 shadow-2xl rounded-2xl">
-        <h2 className="text-3xl font-bold text-center text-white mb-2">Create Request</h2>
-        <p className="text-gray-400 text-center mb-8 text-sm">Ask local shops for what you need</p>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <Input
-            label="What are you looking for?"
-            placeholder="e.g. Sony Headphones, Fresh Milk"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            className="bg-gray-700 border-gray-600 text-white"
-          />
-          
-          <Textarea
-            label="Details (Size, Color, Urgency)"
-            placeholder="Tell shopkeepers more about your requirement..."
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={4}
-            className="bg-gray-700 border-gray-600 text-white"
-          />
+    };
 
-          {error && <div className="bg-red-900/20 border border-red-500/50 p-3 rounded text-red-400 text-sm">{error}</div>}
-          
-          <Button 
-            type="submit" 
-            className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-lg font-semibold transition-all active:scale-95" 
-            disabled={isLoading}
-          >
-            {isLoading ? 'Sending to Shops...' : 'Post Requirement'}
-          </Button>
-        </form>
-      </Card>
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async ({ coords }) => {
+          await submitPost(coords.latitude, coords.longitude);
+        },
+        async (geoError) => {
+          console.warn("Geolocation failed, attempting to submit using saved profile location:", geoError);
+          await submitPost();
+        },
+        { timeout: 8500 }
+      );
+    } else {
+      console.warn("Geolocation not supported, attempting to submit using saved profile location.");
+      await submitPost();
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 sm:py-12">
+      <div className="mx-auto max-w-2xl">
+        <Link href="/customer/dashboard" className="inline-flex min-h-11 items-center gap-2 rounded-xl px-2 text-sm font-bold text-slate-600 hover:text-slate-950"><ArrowLeft className="size-4" /> Back to dashboard</Link>
+        <div className="mt-5 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-xl shadow-slate-200/60">
+          <div className="bg-gradient-to-br from-indigo-600 to-violet-600 p-6 text-white sm:p-9"><span className="grid size-12 place-items-center rounded-2xl bg-white/15"><Send className="size-6" /></span><h1 className="mt-5 text-3xl font-black tracking-tight sm:text-4xl">What do you need?</h1><p className="mt-3 max-w-lg text-sm leading-6 text-indigo-100 sm:text-base">Share a few details and nearby shops can reply with price and availability.</p></div>
+          <form onSubmit={handleSubmit} className="space-y-6 p-5 sm:p-8">
+            <Input id="request-title" label="Item or product" placeholder="e.g. Sony headphones, fresh milk" value={title} onChange={(event) => setTitle(event.target.value)} required />
+            <Textarea id="request-details" label="Helpful details" placeholder="Brand, size, colour, quantity, budget, or when you need it…" value={description} onChange={(event) => setDescription(event.target.value)} rows={5} />
+            <div className="flex items-start gap-3 rounded-2xl bg-indigo-50 p-4 text-sm text-indigo-900"><LocateFixed className="mt-0.5 size-5 shrink-0 text-indigo-600" /><div><p className="font-bold">Location helps us keep it local</p><p className="mt-1 leading-5 text-indigo-700">Your browser will ask for permission when you post. We use it to find nearby shops.</p></div></div>
+            {error && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">{error}</div>}
+            <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? "Finding nearby shops…" : <>Post request <Send className="size-4" /></>}</Button>
+            <p className="flex items-center justify-center gap-2 text-xs text-slate-400"><ShieldCheck className="size-4" /> You decide which shops to contact.</p>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

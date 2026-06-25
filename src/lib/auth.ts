@@ -1,11 +1,3 @@
-// src/lib/auth.ts
-// SECURITY FIXES APPLIED:
-//   ✅ Login rate limiting (max 5 attempts / 15 min per IP)
-//   ✅ Generic error messages (no "No user found" / "Invalid password" leaking)
-//   ✅ Session expiry set (24 hours)
-//   ✅ JWT maxAge set to match session
-//   ✅ Secure cookie settings enforced
-
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { NextAuthOptions, DefaultSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -37,7 +29,6 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials.password) {
-          // ✅ SECURITY FIX: Generic message — don't reveal which field is missing
           throw new Error("Invalid email or password.");
         }
 
@@ -45,23 +36,14 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email.toLowerCase().trim() },
         });
 
-        // ✅ SECURITY FIX: Use constant-time comparison even when user doesn't exist
-        // to prevent timing attacks that reveal whether an account exists
-        const dummyHash =
-          "$2a$12$invalidhashfortimingprotectiononly.......................";
-        const isValid = user?.passwordHash
-          ? await bcrypt.compare(credentials.password, user.passwordHash)
-          : await bcrypt.compare(credentials.password, dummyHash).then(() => false);
+        // Run a bcrypt comparison in all cases to mitigate timing attacks.
+        // Use a locally-generated dummy hash so compare() always receives a valid hash.
+        const dummyHash = bcrypt.hashSync("invalid-password-for-timing", 10);
+        const hashToCompare = user?.passwordHash ?? dummyHash;
+        const isValid = await bcrypt.compare(credentials.password, hashToCompare);
 
-        if (!user || !isValid) {
-          // ✅ SECURITY FIX: Single generic message — don't reveal if account exists
-          throw new Error("Invalid email or password.");
-        }
-
-        if (!user.emailVerified) {
-          // This specific error is caught by the frontend to show "verify email" UI
-          throw new Error("PLEASE_VERIFY_EMAIL");
-        }
+        if (!user || !isValid) throw new Error("Invalid email or password.");
+        if (!user.emailVerified) throw new Error("PLEASE_VERIFY_EMAIL");
 
         return {
           id: user.id,

@@ -25,7 +25,7 @@ export async function GET() {
 
     // 2. Query Redis for Post IDs within 10km
     // GEORADIUS / GEOSEARCH
-    const geoResults = await redis.geosearch(
+    const geoResults = await redis.geosearch<string>(
       "active_posts",
       {
         type: "FROMLONLAT",
@@ -42,7 +42,7 @@ export async function GET() {
       "ASC"
     );
 
-    const nearbyPostIds = geoResults?.map((item: any) => item.member as string) ?? [];
+    const nearbyPostIds = geoResults.map((item) => item.member);
 
     if (!nearbyPostIds || nearbyPostIds.length === 0) {
       return NextResponse.json([], { status: 200 });

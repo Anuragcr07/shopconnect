@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import Button from "@/components/ui/Button";
+import { MessageCircle, Send, X } from "lucide-react";
 
 interface Message {
   id: string;
@@ -36,13 +37,17 @@ export default function ChatWindow({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastMessageTimeRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (isOpen && session?.user?.id && customerPostId && shopkeeperId) {
-      initializeChat();
-    }
-  }, [isOpen, customerPostId, shopkeeperId, session?.user?.id]);
+  const markMessagesAsRead = useCallback(async (convId: string) => {
+    try {
+      await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "markRead", conversationId: convId }),
+      });
+    } catch (err) { console.error(err); }
+  }, []);
 
-  const initializeChat = async () => {
+  const initializeChat = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/chat", {
@@ -67,7 +72,13 @@ export default function ChatWindow({
     } finally {
       setLoading(false);
     }
-  };
+  }, [customerPostId, shopkeeperId, markMessagesAsRead]);
+
+  useEffect(() => {
+    if (isOpen && session?.user?.id && customerPostId && shopkeeperId) {
+      initializeChat();
+    }
+  }, [isOpen, customerPostId, shopkeeperId, session?.user?.id, initializeChat]);
 
   useEffect(() => {
     if (!conversationId || !isOpen) return;
@@ -103,16 +114,6 @@ export default function ChatWindow({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const markMessagesAsRead = async (convId: string) => {
-    try {
-      await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "markRead", conversationId: convId }),
-      });
-    } catch (err) { console.error(err); }
-  };
-
   const handleSend = async () => {
     if (!newMessage.trim() || !conversationId || sending) return;
     const content = newMessage.trim();
@@ -128,7 +129,7 @@ export default function ChatWindow({
       const saved = await res.json();
       setMessages(prev => [...prev, saved]);
       lastMessageTimeRef.current = saved.createdAt;
-    } catch (err) { 
+    } catch {
       alert("Failed to send"); 
     } finally { setSending(false); }
   };
@@ -136,24 +137,24 @@ export default function ChatWindow({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
-      <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-xl shadow-2xl flex flex-col h-[500px]">
-        <div className="p-4 bg-blue-600 flex justify-between items-center text-white rounded-t-xl">
-          <h3 className="font-bold">{recipientName}</h3>
-          <button onClick={onClose} className="p-1">✕</button>
+    <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-slate-950/65 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+      <div className="flex h-[78vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:h-[560px] sm:rounded-3xl">
+        <div className="flex items-center justify-between bg-slate-950 p-4 text-white sm:p-5">
+          <div className="flex min-w-0 items-center gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-500"><MessageCircle className="size-5" /></span><div className="min-w-0"><p className="text-xs font-semibold text-slate-400">Conversation with</p><h3 className="truncate font-extrabold">{recipientName}</h3></div></div>
+          <button type="button" aria-label="Close chat" onClick={onClose} className="grid size-11 place-items-center rounded-xl text-slate-300 transition hover:bg-white/10 hover:text-white"><X className="size-5" /></button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+        <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-4">
           {loading ? (
-            <p className="text-center text-gray-500 mt-10">Loading...</p>
+            <p className="mt-10 text-center text-sm font-semibold text-slate-500">Loading messages…</p>
           ) : messages.length === 0 ? (
-            <p className="text-center text-gray-400 mt-10">No messages yet.</p>
+            <p className="mt-10 text-center text-sm text-slate-400">No messages yet. Say hello!</p>
           ) : (
             messages.map((msg) => {
               const isMine = msg.senderId === session?.user?.id;
               return (
                 <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[80%] p-3 rounded-xl text-sm ${isMine ? "bg-blue-600 text-white" : "bg-white border text-gray-800"}`}>
+                  <div className={`max-w-[84%] rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm ${isMine ? "rounded-br-md bg-indigo-600 text-white" : "rounded-bl-md border border-slate-200 bg-white text-slate-800"}`}>
                     {msg.content}
                   </div>
                 </div>
@@ -163,16 +164,16 @@ export default function ChatWindow({
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-3 border-t flex gap-2">
+        <div className="flex gap-2 border-t border-slate-200 bg-white p-3 sm:p-4">
           <input 
-            className="flex-1 border rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="min-h-12 min-w-0 flex-1 rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
             value={newMessage} 
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
           />
-          <Button onClick={handleSend} disabled={sending} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full px-4">
-            Send
+          <Button aria-label="Send message" onClick={handleSend} disabled={sending} className="size-12 shrink-0 px-0">
+            <Send className="size-4" />
           </Button>
         </div>
       </div>

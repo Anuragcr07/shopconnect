@@ -1,148 +1,83 @@
 "use client";
 
 import { useState } from "react";
-import { Search, ExternalLink, ArrowRight } from "lucide-react";
+import { ArrowUpRight, Search, ShoppingBasket, Sparkles } from "lucide-react";
 
-export default function QuickLinksSection() {
+const services = [
+  { key: "blinkit", name: "Blinkit", letter: "B", surface: "bg-amber-50 border-amber-200", badge: "bg-amber-400 text-slate-950", action: "text-amber-800" },
+  { key: "zepto", name: "Zepto", letter: "Z", surface: "bg-violet-50 border-violet-200", badge: "bg-violet-600 text-white", action: "text-violet-700" },
+  { key: "swiggy", name: "Instamart", letter: "S", surface: "bg-orange-50 border-orange-200", badge: "bg-orange-500 text-white", action: "text-orange-700" },
+] as const;
+
+export default function PriceComparisonSection() {
   const [query, setQuery] = useState("");
-  const [showLinks, setShowLinks] = useState(false);
+  const [searchedQuery, setSearchedQuery] = useState("");
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
-    setShowLinks(true);
+  const handleSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    const value = query.trim();
+    if (value) setSearchedQuery(value);
   };
 
-  // Helper to generate links
-  const getLinks = (term: string) => {
-    const encoded = encodeURIComponent(term);
-    return {
-      blinkit: `https://blinkit.com/s/?q=${encoded}`,
-      zepto: `https://www.zeptonow.com/search?query=${encoded}`,
-      swiggy: `https://www.swiggy.com/instamart/search?custom_back=true&query=${encoded}`,
-    };
+  const encoded = encodeURIComponent(searchedQuery);
+  const links = {
+    blinkit: `https://blinkit.com/s/?q=${encoded}`,
+    zepto: `https://www.zeptonow.com/search?query=${encoded}`,
+    swiggy: `https://www.swiggy.com/instamart/search?custom_back=true&query=${encoded}`,
   };
-
-  const links = getLinks(query);
 
   return (
-    <section className="py-24 px-4 w-full bg-white flex flex-col items-center min-h-[600px] relative overflow-hidden">
-      
-      {/* Background Blobs */}
-      <div className="absolute top-0 left-0 w-64 h-64 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-      <div className="absolute top-0 right-0 w-64 h-64 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+    <section id="compare" className="scroll-mt-24 bg-white py-20 sm:py-28">
+      <div className="page-shell">
+        <div className="mx-auto max-w-3xl text-center">
+          <span className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-3.5 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-orange-700">
+            <Sparkles className="size-3.5" /> Quick compare
+          </span>
+          <h2 className="mt-5 text-3xl font-black tracking-tight text-slate-950 sm:text-5xl">Search once. Check everywhere.</h2>
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+            Open the same product search across popular delivery apps and compare your options in a few taps.
+          </p>
+        </div>
 
-      <div className="max-w-5xl w-full text-center relative z-10">
-        
-        <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">
-          Find it <span className="text-blue-600">Fast</span>
-        </h2>
-        <p className="text-gray-500 text-lg mb-12 max-w-2xl mx-auto">
-          Searching for an item? Type it once here, and instantly open the search results across all major delivery apps.
-        </p>
-
-        {/* --- SEARCH BAR --- */}
-        <form onSubmit={handleSearch} className="relative w-full max-w-2xl mx-auto mb-16 group">
-          <div className="absolute inset-0 bg-blue-200 rounded-full blur opacity-25 group-hover:opacity-40 transition duration-200"></div>
-          <div className="relative flex items-center bg-white rounded-full shadow-xl border border-gray-100 p-2">
-            <Search className="ml-4 text-gray-400 w-6 h-6" />
+        <form onSubmit={handleSearch} className="mx-auto mt-9 flex max-w-2xl flex-col gap-3 rounded-3xl border border-slate-200 bg-white p-2.5 shadow-2xl shadow-slate-200/60 sm:flex-row sm:rounded-full">
+          <label className="flex min-h-13 flex-1 items-center gap-3 px-3 sm:px-4">
+            <Search className="size-5 shrink-0 text-slate-400" />
+            <span className="sr-only">Product to compare</span>
             <input
-              type="text"
-              placeholder="What are you looking for? (e.g., Milk, Bread)"
+              type="search"
+              placeholder="Try milk, headphones, or bread"
               value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                if (e.target.value === "") setShowLinks(false);
-              }}
-              className="w-full p-4 bg-transparent outline-none text-gray-800 text-lg placeholder-gray-400"
+              onChange={(event) => setQuery(event.target.value)}
+              className="min-w-0 flex-1 bg-transparent text-base text-slate-900 outline-none placeholder:text-slate-400"
             />
-            <button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-medium transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2"
-            >
-              Find Item
-            </button>
-          </div>
+          </label>
+          <button type="submit" className="min-h-13 rounded-2xl bg-slate-950 px-6 font-bold text-white transition hover:bg-indigo-600 sm:rounded-full">
+            Compare now
+          </button>
         </form>
 
-        {/* --- DIRECT LINKS CARDS --- */}
-        
-        {/* State: Initial State (Logos) */}
-        {!showLinks && (
-           <div className="flex justify-center gap-8 opacity-40 grayscale">
-              <div className="text-2xl font-bold text-gray-400">Blinkit</div>
-              <div className="text-2xl font-bold text-gray-400">Zepto</div>
-              <div className="text-2xl font-bold text-gray-400">Swiggy</div>
-           </div>
-        )}
-
-        {/* State: Active Links */}
-        {showLinks && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch animate-fade-in">
-            
-            {/* Blinkit Card */}
-            <a 
-              href={links.blinkit} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="group relative flex flex-col bg-yellow-50 border border-yellow-200 rounded-3xl p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-pointer"
-            >
-              <div className="w-16 h-16 bg-yellow-400 text-black rounded-2xl flex items-center justify-center font-bold text-xl mb-4 shadow-sm group-hover:scale-110 transition-transform">
-                B
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2 group-hover:text-yellow-700 transition-colors text-left">
-                Blinkit
-              </h3>
-              <p className="text-gray-600 text-left mb-6">
-                Search for <span className="font-semibold text-gray-900">"{query}"</span> on Blinkit.
-              </p>
-              <div className="mt-auto flex items-center text-yellow-700 font-semibold group-hover:translate-x-2 transition-transform">
-                Open App <ExternalLink className="w-4 h-4 ml-2" />
-              </div>
-            </a>
-
-            {/* Zepto Card */}
-            <a 
-              href={links.zepto} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="group relative flex flex-col bg-purple-50 border border-purple-200 rounded-3xl p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-pointer"
-            >
-              <div className="w-16 h-16 bg-purple-600 text-white rounded-2xl flex items-center justify-center font-bold text-xl mb-4 shadow-sm group-hover:scale-110 transition-transform">
-                Z
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2 group-hover:text-purple-700 transition-colors text-left">
-                Zepto
-              </h3>
-              <p className="text-gray-600 text-left mb-6">
-                Search for <span className="font-semibold text-gray-900">"{query}"</span> on Zepto.
-              </p>
-              <div className="mt-auto flex items-center text-purple-700 font-semibold group-hover:translate-x-2 transition-transform">
-                Open App <ExternalLink className="w-4 h-4 ml-2" />
-              </div>
-            </a>
-
-            {/* Swiggy Card */}
-            <a 
-              href={links.swiggy} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="group relative flex flex-col bg-orange-50 border border-orange-200 rounded-3xl p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-pointer"
-            >
-              <div className="w-16 h-16 bg-orange-500 text-white rounded-2xl flex items-center justify-center font-bold text-xl mb-4 shadow-sm group-hover:scale-110 transition-transform">
-                S
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2 group-hover:text-orange-700 transition-colors text-left">
-                Instamart
-              </h3>
-              <p className="text-gray-600 text-left mb-6">
-                Search for <span className="font-semibold text-gray-900">"{query}"</span> on Swiggy.
-              </p>
-              <div className="mt-auto flex items-center text-orange-700 font-semibold group-hover:translate-x-2 transition-transform">
-                Open App <ExternalLink className="w-4 h-4 ml-2" />
-              </div>
-            </a>
-
+        {!searchedQuery ? (
+          <div className="mx-auto mt-10 flex max-w-xl items-center justify-center gap-3 rounded-2xl bg-slate-50 px-5 py-4 text-sm text-slate-500">
+            <ShoppingBasket className="size-5 text-indigo-500" /> Enter an item to reveal direct search links.
+          </div>
+        ) : (
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {services.map((service) => (
+              <a
+                key={service.key}
+                href={links[service.key]}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`group flex min-h-56 flex-col rounded-3xl border p-6 transition duration-300 hover:-translate-y-1 hover:shadow-xl ${service.surface}`}
+              >
+                <div className={`grid size-12 place-items-center rounded-2xl text-lg font-black shadow-sm ${service.badge}`}>{service.letter}</div>
+                <h3 className="mt-5 text-xl font-extrabold text-slate-900">{service.name}</h3>
+                <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">Search for <strong>&ldquo;{searchedQuery}&rdquo;</strong> on {service.name}.</p>
+                <span className={`mt-auto flex items-center gap-2 pt-5 text-sm font-extrabold ${service.action}`}>
+                  Open search <ArrowUpRight className="size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                </span>
+              </a>
+            ))}
           </div>
         )}
       </div>
