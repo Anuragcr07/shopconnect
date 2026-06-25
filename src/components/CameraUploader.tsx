@@ -28,11 +28,9 @@ export default function CameraUploader({ onUploadComplete }: CameraUploaderProps
       const blob = await fetch(image).then((response) => response.blob());
       const formData = new FormData();
       formData.append("file", new File([blob], "capture.jpg", { type: "image/jpeg" }));
-      formData.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "shop_unsigned_preset");
-      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, { method: "POST", body: formData });
+      const response = await fetch("/api/upload", { method: "POST", body: formData });
       const data = await response.json();
-      if (!data.secure_url) throw new Error("Upload failed");
+      if (!response.ok || !data.secure_url) throw new Error(data.message || "Upload failed");
       onUploadComplete(data.secure_url);
       setImage(null);
     } catch (error) {
