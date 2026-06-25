@@ -55,6 +55,11 @@ function LoginFormContent() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <Input id="email" label="Email address" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} required />
           <Input id="password" label="Password" type="password" autoComplete="current-password" placeholder="••••••••" value={password} onChange={(event) => setPassword(event.target.value)} required />
+          <div className="flex justify-end -mt-2">
+            <Link href="/forgot-password" className="text-xs font-bold text-indigo-600 transition hover:text-indigo-700 sm:text-sm">
+              Forgot password?
+            </Link>
+          </div>
           {error && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">{error}</div>}
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Logging in…" : <>Log in <ArrowRight className="size-4" /></>}

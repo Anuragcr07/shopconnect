@@ -62,3 +62,56 @@ export const sendVerificationEmail = async (email: string, token: string) => {
     throw error;
   }
 };
+
+export const sendPasswordResetEmail = async (email: string, token: string) => {
+  const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}&email=${email}`;
+  
+  const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
+
+  // Create email headers and body
+  const subject = "Reset your LocalTrade Hub Password";
+  const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+  
+  const messageParts = [
+    `From: "LocalTrade Hub" <${GMAIL_USER}>`,
+    `To: ${email}`,
+    'Content-Type: text/html; charset=utf-8',
+    'MIME-Version: 1.0',
+    `Subject: ${utf8Subject}`,
+    '',
+    `
+      <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 10px;">
+        <h2 style="color: #4f46e5; text-align: center;">Reset your Password</h2>
+        <p>You requested a password reset. Please click the button below to choose a new password.</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetLink}" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
+        </div>
+        <p style="font-size: 12px; color: #666;">This link is valid for 1 hour. If you did not request a password reset, you can safely ignore this email.</p>
+        <hr />
+        <p style="font-size: 10px; color: #999;">${resetLink}</p>
+      </div>
+    `,
+  ];
+  
+  const message = messageParts.join('\n');
+
+  // Gmail API requires base64url encoding
+  const encodedMessage = Buffer.from(message)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+  try {
+    await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: {
+        raw: encodedMessage,
+      },
+    });
+    console.log("✅ Password reset email sent successfully via Gmail API");
+  } catch (error) {
+    console.error("❌ Gmail API Error (Password Reset):", error);
+    throw error;
+  }
+};

@@ -170,3 +170,35 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export async function GET(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const conversations = await prisma.conversation.findMany({
+      where: {
+        OR: [
+          { customerId: session.user.id },
+          { shopkeeperId: session.user.id },
+        ],
+      },
+      include: {
+        customer: { select: { id: true, name: true } },
+        shopkeeper: { select: { id: true, name: true, shopName: true } },
+        customerPost: { select: { id: true, title: true } },
+      },
+      orderBy: { lastMessageAt: "desc" },
+    });
+
+    return NextResponse.json(conversations);
+  } catch (error) {
+    console.error("CHAT_GET_ERROR:", error);
+    return NextResponse.json(
+      { error: "Something went wrong." },
+      { status: 500 }
+    );
+  }
+}

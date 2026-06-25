@@ -21,10 +21,6 @@ export default function Footer() {
             <Link href="/signup" className="transition hover:text-white">Join ShopConnect</Link>
           </nav>
         </div>
-        <div className="mt-8 flex flex-col gap-2 border-t border-slate-800 pt-6 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} ShopConnect. All rights reserved.</p>
-          <p className="flex items-center gap-1.5">Made with <Heart className="size-3.5 text-rose-400" fill="currentColor" /> for local communities.</p>
-        </div>
       </div>
     </footer>
   );

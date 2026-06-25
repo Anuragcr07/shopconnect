@@ -70,6 +70,8 @@ model User {
   shopName      String?
   address       String?
   phone         String?
+  resetToken    String?   @unique
+  resetTokenExpires DateTime?
 
   accounts      Account[]
   sessions      Session[]
