@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "source.unsplash.com" },
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "*.s3.amazonaws.com" },
+      { protocol: "https", hostname: "*.s3.*.amazonaws.com" },
     ],
   },
 
@@ -60,7 +62,7 @@ const nextConfig: NextConfig = {
               // next.js needs 'unsafe-inline' and 'unsafe-eval' in dev; tighten for prod if possible
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://source.unsplash.com https://*.basemaps.cartocdn.com https://*.openstreetmap.org",
+              "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://source.unsplash.com https://*.basemaps.cartocdn.com https://*.openstreetmap.org https://*.s3.amazonaws.com https://*.s3.*.amazonaws.com",
               "font-src 'self' data:",
               "connect-src 'self' https://api.cloudinary.com",
               "frame-ancestors 'none'",

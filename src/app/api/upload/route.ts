@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -15,32 +16,58 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "No file provided" }, { status: 400 });
     }
 
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME;
-    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || process.env.CLOUDINARY_UPLOAD_PRESET || "shop_unsigned_preset";
+    const bucketName = process.env.AWS_BUCKET_NAME;
+    const region = process.env.AWS_REGION;
+    const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
 
-    if (!cloudName) {
-      console.error("Cloudinary cloud name is not configured on the server.");
-      return NextResponse.json({ message: "Cloudinary cloud name is not configured on the server" }, { status: 500 });
+    if (!bucketName || !region || !accessKeyId || !secretAccessKey) {
+      console.error("S3 configuration is missing on the server.");
+      return NextResponse.json(
+        { message: "S3 upload configuration is missing on the server" },
+        { status: 500 }
+      );
     }
 
-    const cloudinaryFormData = new FormData();
-    cloudinaryFormData.append("file", file);
-    cloudinaryFormData.append("upload_preset", uploadPreset);
-
-    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, {
-      method: "POST",
-      body: cloudinaryFormData,
+    // Initialize AWS S3 client
+    const s3Client = new S3Client({
+      region,
+      credentials: {
+        accessKeyId,
+        secretAccessKey,
+      },
     });
 
-    const data = await response.json();
-    if (!response.ok || !data.secure_url) {
-      console.error("Cloudinary upload failed:", data);
-      return NextResponse.json({ message: "Cloudinary upload failed", error: data }, { status: response.status });
-    }
+    // Convert file to buffer for uploading
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-    return NextResponse.json({ secure_url: data.secure_url });
+    // Create a unique file key in S3
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 8);
+    // Sanitize user ID to avoid path issues
+    const sanitizedUserId = session.user.id.replace(/[^a-zA-Z0-9]/g, "");
+    const key = `uploads/${sanitizedUserId}-${timestamp}-${randomString}.jpg`;
+
+    // Note: Public read permission is expected to be handled by a Bucket Policy.
+    // However, we set ContentType explicitly so browser renders it instead of downloading.
+    const uploadParams = {
+      Bucket: bucketName,
+      Key: key,
+      Body: buffer,
+      ContentType: file.type || "image/jpeg",
+    };
+
+    await s3Client.send(new PutObjectCommand(uploadParams));
+
+    const s3Url = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
+
+    return NextResponse.json({ secure_url: s3Url });
   } catch (error) {
     console.error("Error in /api/upload:", error);
-    return NextResponse.json({ message: "Internal server error", error: String(error) }, { status: 500 });
+    return NextResponse.json(
+      { message: "Internal server error", error: String(error) },
+      { status: 500 }
+    );
   }
 }

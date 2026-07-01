@@ -21,7 +21,7 @@ export default function CameraUploader({ onUploadComplete }: CameraUploaderProps
     setShowCamera(false);
   };
 
-  const uploadToCloudinary = async () => {
+  const uploadPhoto = async () => {
     if (!image) return;
     setUploading(true);
     try {
@@ -34,7 +34,7 @@ export default function CameraUploader({ onUploadComplete }: CameraUploaderProps
       onUploadComplete(data.secure_url);
       setImage(null);
     } catch (error) {
-      console.error("Error uploading to Cloudinary:", error);
+      console.error("Error uploading photo:", error);
       alert("Photo upload failed. Please try again.");
     } finally {
       setUploading(false);
@@ -45,7 +45,7 @@ export default function CameraUploader({ onUploadComplete }: CameraUploaderProps
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white p-4">
       {!showCamera && !image && <button type="button" onClick={() => setShowCamera(true)} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-indigo-50 px-4 py-2 text-sm font-bold text-indigo-700 transition hover:bg-indigo-100"><ImagePlus className="size-4" /> Add a product photo</button>}
       {showCamera && <div className="flex w-full flex-col items-center gap-3"><Webcam ref={webcamRef} audio={false} screenshotFormat="image/jpeg" videoConstraints={videoConstraints} className="w-full rounded-2xl border border-slate-200" /><button type="button" onClick={capture} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700"><Camera className="size-4" /> Capture</button></div>}
-      {image && <div className="flex flex-col items-center gap-3"><Image src={image} alt="Captured product" width={192} height={192} unoptimized className="size-48 rounded-2xl border border-slate-200 object-cover" /><div className="flex gap-3"><button type="button" onClick={() => setImage(null)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"><RotateCcw className="size-4" /> Retake</button><button type="button" onClick={uploadToCloudinary} disabled={uploading} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-60">{uploading ? "Uploading…" : <><Check className="size-4" /> Use photo</>}</button></div></div>}
+      {image && <div className="flex flex-col items-center gap-3"><Image src={image} alt="Captured product" width={192} height={192} unoptimized className="size-48 rounded-2xl border border-slate-200 object-cover" /><div className="flex gap-3"><button type="button" onClick={() => setImage(null)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"><RotateCcw className="size-4" /> Retake</button><button type="button" onClick={uploadPhoto} disabled={uploading} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-60">{uploading ? "Uploading…" : <><Check className="size-4" /> Use photo</>}</button></div></div>}
     </div>
   );
 }
