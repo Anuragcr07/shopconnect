@@ -25,7 +25,17 @@ export default function CameraUploader({ onUploadComplete }: CameraUploaderProps
     if (!image) return;
     setUploading(true);
     try {
-      const blob = await fetch(image).then((response) => response.blob());
+      // Convert base64 data URL to Blob without fetching (avoids CSP connect-src restrictions)
+      const parts = image.split(",");
+      const mime = parts[0].match(/:(.*?);/)?.[1] || "image/jpeg";
+      const bstr = atob(parts[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const blob = new Blob([u8arr], { type: mime });
+
       const formData = new FormData();
       formData.append("file", new File([blob], "capture.jpg", { type: "image/jpeg" }));
       const response = await fetch("/api/upload", { method: "POST", body: formData });
