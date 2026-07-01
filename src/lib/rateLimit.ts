@@ -5,11 +5,14 @@
 import { Redis } from "@upstash/redis";
 import { NextRequest, NextResponse } from "next/server";
 
-// Initialize Redis client using your existing Upstash env vars
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+// Initialize Redis client conditionally to avoid crashing on import if envs are missing
+let redis: Redis | null = null;
+if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+  redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+  });
+}
 
 interface RateLimitConfig {
   maxRequests: number;   // How many requests allowed
@@ -25,38 +28,47 @@ export async function rateLimit(
   req: NextRequest,
   config: RateLimitConfig
 ): Promise<{ success: true } | NextResponse> {
-  // Get the real IP — Render sets x-forwarded-for
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
-    req.headers.get("x-real-ip") ??
-    "unknown";
+  try {
+    if (!redis) {
+      console.warn(`Upstash Redis rate-limiter is not configured for prefix "${config.keyPrefix}". Rate limiting disabled.`);
+      return { success: true };
+    }
 
-  const key = `rate:${config.keyPrefix}:${ip}`;
+    // Get the real IP — Render sets x-forwarded-for
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+      req.headers.get("x-real-ip") ??
+      "unknown";
 
-  // Increment the counter and set TTL atomically
-  const requests = await redis.incr(key);
+    const key = `rate:${config.keyPrefix}:${ip}`;
 
-  if (requests === 1) {
-    // First request — set the expiry window
-    await redis.expire(key, config.windowSeconds);
-  }
+    // Increment the counter and set TTL atomically
+    const requests = await redis.incr(key);
 
-  if (requests > config.maxRequests) {
-    const ttl = await redis.ttl(key);
-    return NextResponse.json(
-      {
-        message: `Too many attempts. Please try again in ${Math.ceil(ttl / 60)} minute(s).`,
-      },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": String(ttl),
-          "X-RateLimit-Limit": String(config.maxRequests),
-          "X-RateLimit-Remaining": "0",
-          "X-RateLimit-Reset": String(Date.now() + ttl * 1000),
+    if (requests === 1) {
+      // First request — set the expiry window
+      await redis.expire(key, config.windowSeconds);
+    }
+
+    if (requests > config.maxRequests) {
+      const ttl = await redis.ttl(key);
+      return NextResponse.json(
+        {
+          message: `Too many attempts. Please try again in ${Math.ceil(ttl / 60)} minute(s).`,
         },
-      }
-    );
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(ttl),
+            "X-RateLimit-Limit": String(config.maxRequests),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": String(Date.now() + ttl * 1000),
+          },
+        }
+      );
+    }
+  } catch (error) {
+    console.error(`Rate limiting error for prefix "${config.keyPrefix}" (failing open):`, error);
   }
 
   return { success: true };

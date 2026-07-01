@@ -1,7 +1,6 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, Compass, MapPin, MessageCircle, PackageSearch, Plus, Store, X } from "lucide-react";
@@ -37,7 +36,6 @@ export default function CustomerDashboardPage() {
   const [chatConfig, setChatConfig] = useState<ChatConfig | null>(null);
 
   useEffect(() => {
-    if (status === "unauthenticated") redirect("/login");
     if (status === "authenticated" && session?.user.role === "CUSTOMER") {
       fetch("/api/customer/posts")
         .then((response) => response.json())

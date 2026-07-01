@@ -1,7 +1,6 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
@@ -61,17 +60,11 @@ export default function ShopkeeperDashboardPage() {
   } | null>(null);
 
   useEffect(() => {
-    if (status === "authenticated") {
-      if (session?.user.role !== "SHOPKEEPER") {
-        redirect("/customer/dashboard");
-      } else {
-        fetchAllData();
-        fetchLocation();
-        const intervalId = setInterval(() => fetchAllData(true), 10000);
-        return () => clearInterval(intervalId);
-      }
-    } else if (status === "unauthenticated") {
-      redirect("/login");
+    if (status === "authenticated" && session?.user.role === "SHOPKEEPER") {
+      fetchAllData();
+      fetchLocation();
+      const intervalId = setInterval(() => fetchAllData(true), 10000);
+      return () => clearInterval(intervalId);
     }
   }, [status, session]);
 
