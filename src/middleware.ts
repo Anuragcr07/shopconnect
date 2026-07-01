@@ -8,6 +8,7 @@ import { getToken } from "next-auth/jwt";
 // Routes that require a logged-in user
 const PROTECTED_ROUTES = [
   "/dashboard",
+  "/customer",
   "/profile",
   "/chat",
   "/inquiry",
@@ -20,6 +21,8 @@ const PROTECTED_API_ROUTES = [
   "/api/profile",
   "/api/inquiry",
   "/api/shopkeeper",
+  "/api/customer",
+  "/api/upload",
 ];
 
 export async function middleware(req: NextRequest) {
