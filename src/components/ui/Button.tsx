@@ -1,5 +1,5 @@
 import React from 'react';
-import { twMerge } from 'tailwind-merge'; // npm install tailwind-merge
+import { twMerge } from 'tailwind-merge';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'outline' | 'ghost';

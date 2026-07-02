@@ -1,11 +1,3 @@
-// src/app/api/chat/route.ts
-// SECURITY FIXES APPLIED:
-//   ✅ Auth check on every action (already had it — preserved)
-//   ✅ Ownership check before reading/writing messages
-//   ✅ Input sanitisation on message content
-//   ✅ Limit message length to prevent payload flooding
-//   ✅ Safe error responses
-
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -14,7 +6,6 @@ import { sanitiseString } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
   try {
-    // ✅ Auth check — always first
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -23,7 +14,6 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { action, customerPostId, shopkeeperId, conversationId, content, after } = body;
 
-    // ── 1. Initialize Chat ──────────────────────────────────────────────────
     if (action === "init") {
       if (!customerPostId || !shopkeeperId) {
         return NextResponse.json({ error: "Missing IDs" }, { status: 400 });
@@ -48,7 +38,6 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: "Post not found" }, { status: 404 });
         }
 
-        // ✅ SECURITY FIX: Only the post's customer or the target shopkeeper can init a chat
         const userId = session.user.id;
         const isCustomer = post.customerId === userId;
         const isShopkeeper = shopkeeperId === userId;
@@ -70,16 +59,29 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      return NextResponse.json(conversation);
+      const shopRequest = await prisma.shopRequest.findFirst({
+        where: {
+          customerPostId,
+          shopkeeperId,
+        },
+        select: {
+          isAvailable: true,
+          message: true,
+          imageUrls: true,
+        },
+      });
+
+      return NextResponse.json({
+        ...conversation,
+        shopRequest,
+      });
     }
 
-    // ── 2. Send Message ─────────────────────────────────────────────────────
     if (action === "send") {
       if (!conversationId || !content) {
         return NextResponse.json({ error: "Missing data" }, { status: 400 });
       }
 
-      // ✅ SECURITY FIX: Sanitise message content — strip HTML, limit length
       const sanitisedContent = sanitiseString(content, 2000);
       if (!sanitisedContent) {
         return NextResponse.json(
@@ -88,7 +90,6 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // ✅ SECURITY FIX: Verify the sender is a participant in this conversation
       const conversation = await prisma.conversation.findUnique({
         where: { id: conversationId },
         select: { customerId: true, shopkeeperId: true },
@@ -123,13 +124,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(newMessage);
     }
 
-    // ── 3. Fetch Messages ───────────────────────────────────────────────────
     if (action === "fetch") {
       if (!conversationId) {
         return NextResponse.json({ error: "Missing ID" }, { status: 400 });
       }
 
-      // ✅ SECURITY FIX: Verify requester is a participant before returning messages
       const conversation = await prisma.conversation.findUnique({
         where: { id: conversationId },
         select: { customerId: true, shopkeeperId: true },
@@ -153,7 +152,6 @@ export async function POST(req: NextRequest) {
           ...(after && { createdAt: { gt: new Date(after) } }),
         },
         orderBy: { createdAt: "asc" },
-        // ✅ SECURITY FIX: Limit fetch to prevent huge payload attacks
         take: 100,
       });
 
@@ -162,7 +160,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
-    // ✅ SECURITY FIX: Never leak internal error details
     console.error("CHAT_ERROR:", error);
     return NextResponse.json(
       { error: "Something went wrong." },

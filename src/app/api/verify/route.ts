@@ -1,9 +1,4 @@
-// src/app/api/verify/route.ts
-// SECURITY FIXES APPLIED:
-//   ✅ Timing-safe token comparison (prevents timing attacks)
-//   ✅ Input validation on token and email
-//   ✅ Token immediately deleted after use (one-time use)
-//   ✅ Expiry check preserved
+
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -17,12 +12,10 @@ export async function GET(req: Request) {
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-    // ✅ SECURITY FIX: Validate inputs before hitting the database
     if (!token || !email) {
       return NextResponse.redirect(`${baseUrl}/login?error=InvalidLink`);
     }
 
-    // Basic sanity checks
     if (token.length !== 64 || !/^[0-9a-f]+$/.test(token)) {
       return NextResponse.redirect(`${baseUrl}/login?error=InvalidLink`);
     }
@@ -31,8 +24,7 @@ export async function GET(req: Request) {
       where: { identifier: email.toLowerCase().trim() },
     });
 
-    // ✅ SECURITY FIX: Use timing-safe comparison to prevent timing attacks
-    // Don't compare tokens with === which leaks timing info
+   
     if (!verifiedToken) {
       return NextResponse.redirect(`${baseUrl}/login?error=Expired`);
     }
@@ -48,7 +40,6 @@ export async function GET(req: Request) {
       return NextResponse.redirect(`${baseUrl}/login?error=Expired`);
     }
 
-    // ✅ SECURITY FIX: Atomically verify and delete the token (prevents reuse)
     await prisma.$transaction([
       prisma.user.update({
         where: { email: email.toLowerCase().trim() },

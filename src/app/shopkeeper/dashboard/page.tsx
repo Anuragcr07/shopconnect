@@ -4,20 +4,17 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
-// UI Components
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import CameraUploader from "@/components/CameraUploader";
 import ChatWindow from "@/components/ChatWindow";
 
-// Icons
 import { 
   MapPin, Store, History, CheckCircle2, 
   MessageCircle, RefreshCcw, X
 } from "lucide-react";
 
-// --- Updated Types ---
 interface CustomerPost {
   id: string;
   title: string;

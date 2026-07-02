@@ -17,7 +17,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
     }
 
-    // Check if the shopkeeper has already responded to this post
     const existingResponse = await prisma.shopRequest.findFirst({
       where: {
         customerPostId: customerPostId,
@@ -38,7 +37,7 @@ export async function POST(req: Request) {
         shopkeeperId: session.user.id,
         isAvailable,
         message,
-        imageUrls: imageUrls || [], // ✅ save Cloudinary image URLs
+        imageUrls: imageUrls || [], 
       },
     });
 

@@ -13,7 +13,6 @@ export async function GET() {
   }
 
   try {
-    // 1. Get Shopkeeper's location from DB
     const shopkeeper = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { latitude: true, longitude: true }
@@ -23,8 +22,7 @@ export async function GET() {
       return NextResponse.json({ message: 'Location not set' }, { status: 400 });
     }
 
-    // 2. Query Redis for Post IDs within 10km
-    // GEORADIUS / GEOSEARCH
+   
     const geoResults = await redis.geosearch<string>(
       "active_posts",
       {
@@ -48,12 +46,10 @@ export async function GET() {
       return NextResponse.json([], { status: 200 });
     }
 
-    // 3. Fetch full post details from Prisma using the IDs found in Redis
     const posts = await prisma.customerPost.findMany({
       where: {
         id: { in: nearbyPostIds },
         status: 'OPEN',
-        // Still filter out posts they already responded to
         NOT: {
           responses: {
             some: { shopkeeperId: session.user.id }
@@ -64,7 +60,7 @@ export async function GET() {
         customer: {
           select: { id: true, name: true, email: true }
         },
-        responses: true // To keep the .some() filter from crashing
+        responses: true 
       },
       orderBy: { createdAt: 'desc' }
     });

@@ -1,4 +1,3 @@
-// components/MapComponent.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,7 +6,6 @@ import { MapContainer, TileLayer, Marker, Popup, GeoJSON, useMap } from "react-l
 import type { GeoJsonObject } from "geojson";
 import "leaflet/dist/leaflet.css";
 
-/* ─── Types ──────────────────────────────────────────────────────────────── */
 interface MarkerData {
   lat: number;
   lng: number;
@@ -21,9 +19,7 @@ interface MapComponentProps {
   zoom?: number;
 }
 
-/* ─── Leaflet Global Configurations ───────────────────────────────────────── */
 if (typeof window !== "undefined") {
-  // Fix broken default icons
   delete (L.Icon.Default.prototype as any)._getIconUrl;
 
   const svgPin = encodeURIComponent(`
@@ -41,7 +37,6 @@ if (typeof window !== "undefined") {
   });
 }
 
-/* ─── Helpers ────────────────────────────────────────────────────────────── */
 function extractCoords(geo: GeoJsonObject): number[][] {
   const g = geo as any;
   if (g.type === "LineString" && Array.isArray(g.coordinates))
@@ -69,7 +64,6 @@ function bearing(a: [number, number], b: [number, number]): number {
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
 
-/* ─── Arrow layer ────────────────────────────────────────────────────────── */
 function ArrowLayer({ routeGeoJSON }: { routeGeoJSON: GeoJsonObject }) {
   const map = useMap();
 
@@ -112,7 +106,6 @@ function ArrowLayer({ routeGeoJSON }: { routeGeoJSON: GeoJsonObject }) {
   return null;
 }
 
-/* ─── Main component ─────────────────────────────────────────────────────── */
 export default function MapComponent({
   center,
   markers = [],
@@ -121,7 +114,6 @@ export default function MapComponent({
 }: MapComponentProps) {
   const [isMounted, setIsMounted] = useState(false);
 
-  // Only render on client
   useEffect(() => {
     setIsMounted(true);
   }, []);

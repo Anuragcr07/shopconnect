@@ -34,6 +34,11 @@ export default function ChatWindow({
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [shopRequest, setShopRequest] = useState<{
+    isAvailable: boolean;
+    message: string | null;
+    imageUrls: string[];
+  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastMessageTimeRef = useRef<string | null>(null);
 
@@ -61,6 +66,7 @@ export default function ChatWindow({
         setConversationId(data.id);
         const msgs = data.messages || [];
         setMessages(msgs);
+        setShopRequest(data.shopRequest || null);
         
         if (msgs.length > 0) {
           lastMessageTimeRef.current = msgs[msgs.length - 1].createdAt;
@@ -145,6 +151,32 @@ export default function ChatWindow({
         </div>
 
         <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-4">
+          {shopRequest && (
+            <div className="mb-4 rounded-2xl border border-indigo-100 bg-indigo-50/40 p-3.5 text-xs leading-relaxed text-slate-700">
+              <p className="font-bold text-indigo-800 uppercase tracking-wider text-[10px] mb-1">Response Offer Details</p>
+              <p className="font-bold text-slate-900 mb-1.5 flex items-center gap-1.5">
+                <span className={`inline-block h-2 w-2 rounded-full ${shopRequest.isAvailable ? "bg-emerald-500" : "bg-rose-500"}`} />
+                {shopRequest.isAvailable ? "Available" : "Not Available"}
+              </p>
+              {shopRequest.message && (
+                <p className="italic text-slate-600 mb-2 leading-relaxed">&ldquo;{shopRequest.message}&rdquo;</p>
+              )}
+              {shopRequest.imageUrls && shopRequest.imageUrls.length > 0 && (
+                <div className="flex gap-2 overflow-x-auto py-1">
+                  {shopRequest.imageUrls.map((url, i) => (
+                    <div key={i} className="relative size-16 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                      <img
+                        src={url}
+                        alt="Product offer preview"
+                        className="h-full w-full object-cover cursor-pointer"
+                        onClick={() => window.open(url, "_blank")}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           {loading ? (
             <p className="mt-10 text-center text-sm font-semibold text-slate-500">Loading messages…</p>
           ) : messages.length === 0 ? (

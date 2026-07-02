@@ -29,7 +29,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Initialize AWS S3 client
     const s3Client = new S3Client({
       region,
       credentials: {
@@ -38,19 +37,15 @@ export async function POST(req: Request) {
       },
     });
 
-    // Convert file to buffer for uploading
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Create a unique file key in S3
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 8);
-    // Sanitize user ID to avoid path issues
     const sanitizedUserId = session.user.id.replace(/[^a-zA-Z0-9]/g, "");
     const key = `uploads/${sanitizedUserId}-${timestamp}-${randomString}.jpg`;
 
-    // Note: Public read permission is expected to be handled by a Bucket Policy.
-    // However, we set ContentType explicitly so browser renders it instead of downloading.
+    
     const uploadParams = {
       Bucket: bucketName,
       Key: key,

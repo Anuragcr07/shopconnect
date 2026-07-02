@@ -5,7 +5,6 @@
 import { Redis } from "@upstash/redis";
 import { NextRequest, NextResponse } from "next/server";
 
-// Initialize Redis client conditionally to avoid crashing on import if envs are missing
 let redis: Redis | null = null;
 if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
   redis = new Redis({
@@ -34,7 +33,6 @@ export async function rateLimit(
       return { success: true };
     }
 
-    // Get the real IP — Render sets x-forwarded-for
     const ip =
       req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
       req.headers.get("x-real-ip") ??
@@ -42,11 +40,9 @@ export async function rateLimit(
 
     const key = `rate:${config.keyPrefix}:${ip}`;
 
-    // Increment the counter and set TTL atomically
     const requests = await redis.incr(key);
 
     if (requests === 1) {
-      // First request — set the expiry window
       await redis.expire(key, config.windowSeconds);
     }
 

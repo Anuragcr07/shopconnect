@@ -52,7 +52,6 @@ export async function GET() {
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
 
-  // Check if session and ID exist
   if (!session?.user?.id || session.user.role !== 'CUSTOMER') {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
@@ -64,12 +63,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Title is required' }, { status: 400 });
     }
 
-    // Convert coordinates and validate they are valid numbers
     let lat = parseFloat(latitude);
     let lng = parseFloat(longitude);
     let isValidLocation = !isNaN(lat) && !isNaN(lng);
 
-    // If client didn't send valid coordinates, try to fall back to user's saved location
     if (!isValidLocation) {
       const user = await prisma.user.findUnique({
         where: { id: session.user.id },
@@ -82,7 +79,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // 1. Update the customer's location in the User model if new coordinates were provided
     const hasNewLocation = !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude));
     if (hasNewLocation && isValidLocation) {
       await prisma.user.update({
@@ -94,7 +90,6 @@ export async function POST(req: Request) {
       });
     }
 
-    // 2. Create the Requirement Post in PostgreSQL
     const newPost = await prisma.customerPost.create({
       data: {
         title,
@@ -104,7 +99,6 @@ export async function POST(req: Request) {
       },
     });
 
-    // 3. Index in Redis Geospatial only if location is valid
     if (isValidLocation) {
       try {
         await redis.geoadd("active_posts", {
@@ -114,7 +108,6 @@ export async function POST(req: Request) {
         });
       } catch (redisError) {
         console.error("REDIS_GEOADD_ERROR:", redisError);
-        // We don't necessarily want to crash the whole request if Redis fails
       }
     }
 

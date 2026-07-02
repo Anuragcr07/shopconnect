@@ -25,7 +25,6 @@ export default function CameraUploader({ onUploadComplete }: CameraUploaderProps
     if (!image) return;
     setUploading(true);
     try {
-      // Convert base64 data URL to Blob without fetching (avoids CSP connect-src restrictions)
       const parts = image.split(",");
       const mime = parts[0].match(/:(.*?);/)?.[1] || "image/jpeg";
       const bstr = atob(parts[1]);

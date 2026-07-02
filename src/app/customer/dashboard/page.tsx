@@ -2,6 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { ArrowRight, Compass, MapPin, MessageCircle, PackageSearch, Plus, Store, X } from "lucide-react";
 import Button from "@/components/ui/Button";
@@ -11,7 +12,7 @@ import ChatWindow from "@/components/ChatWindow";
 const MapComponent = dynamic(() => import("@/components/MapComponents"), { ssr: false });
 
 interface Shopkeeper { id: string; shopName: string | null; latitude: number | null; longitude: number | null; }
-interface ShopkeeperResponse { id: string; message: string; shopkeeper: Shopkeeper; }
+interface ShopkeeperResponse { id: string; message: string; imageUrls?: string[]; shopkeeper: Shopkeeper; }
 interface CustomerPost {
   id: string;
   title: string;
@@ -141,7 +142,30 @@ export default function CustomerDashboardPage() {
                 <div className="space-y-3 p-4 sm:p-6">
                   {post.responses.length === 0 ? <div className="rounded-2xl bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">Waiting for nearby shops to respond.</div> : post.responses.map((response) => (
                     <div key={response.id} className="rounded-2xl border border-slate-200 p-4 transition hover:border-indigo-200 hover:bg-indigo-50/20 sm:p-5">
-                      <div className="flex items-start gap-3"><span className="grid size-11 shrink-0 place-items-center rounded-xl bg-slate-950 text-white"><Store className="size-5" /></span><div className="min-w-0"><p className="font-extrabold text-slate-900">{response.shopkeeper.shopName || "Local shop"}</p><p className="mt-1 text-sm leading-6 text-slate-600">&ldquo;{response.message}&rdquo;</p></div></div>
+                      <div className="flex items-start gap-3">
+                        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-slate-950 text-white"><Store className="size-5" /></span>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-extrabold text-slate-900">{response.shopkeeper.shopName || "Local shop"}</p>
+                          <p className="mt-1 text-sm leading-6 text-slate-600">&ldquo;{response.message}&rdquo;</p>
+                          {response.imageUrls && response.imageUrls.length > 0 && (
+                            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                              {response.imageUrls.map((url, i) => (
+                                <div key={i} className="relative size-20 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
+                                  <Image
+                                    src={url}
+                                    alt="Product offer"
+                                    fill
+                                    sizes="80px"
+                                    className="object-cover cursor-pointer"
+                                    unoptimized
+                                    onClick={() => window.open(url, "_blank")}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                       <div className="mt-4 grid grid-cols-3 gap-2">
                         <Button variant="outline" className="min-w-0 px-2 text-xs sm:text-sm" onClick={() => handleViewShopOnMap(response.shopkeeper)}><MapPin className="size-4" /><span className="hidden sm:inline">Map</span></Button>
                         <Button variant="outline" className="min-w-0 px-2 text-xs sm:text-sm" onClick={() => response.shopkeeper.latitude !== null && response.shopkeeper.longitude !== null && handleGetDirections(response.shopkeeper.latitude, response.shopkeeper.longitude)}><Compass className="size-4" /><span className="hidden sm:inline">Directions</span></Button>

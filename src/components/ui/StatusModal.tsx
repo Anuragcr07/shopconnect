@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle, XCircle, Info } from "lucide-react"; // npm install lucide-react
+import { CheckCircle, XCircle, Info } from "lucide-react";
 import Button from "./Button";
 
 interface StatusModalProps {

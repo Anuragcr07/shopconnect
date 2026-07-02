@@ -1,11 +1,3 @@
-// src/app/api/users/route.ts
-// SECURITY FIXES APPLIED:
-//   ✅ Rate limiting (max 3 signups / hour per IP)
-//   ✅ Input validation and sanitisation
-//   ✅ Password strength enforcement
-//   ✅ Role whitelisting (no arbitrary roles)
-//   ✅ Safe generic error messages (no stack traces exposed)
-//   ✅ bcrypt cost factor raised to 12
 
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
@@ -22,25 +14,22 @@ import {
 } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
-  // ✅ SECURITY FIX 1: Rate limit signups to prevent spam account creation
   const rateLimitResult = await rateLimit(req, signupRateLimitConfig);
   if (rateLimitResult instanceof NextResponse) {
-    return rateLimitResult; // Returns 429 if limit exceeded
+    return rateLimitResult; 
   }
 
   try {
     const body = await req.json();
 
-    // ✅ SECURITY FIX 2: Sanitise all string inputs before processing
     const name = sanitiseString(body.name, 100);
     const email = sanitiseString(body.email, 254).toLowerCase();
-    const password = body.password; // Don't sanitise password — check as-is
+    const password = body.password; 
     const role = body.role;
     const shopName = sanitiseString(body.shopName, 100);
     const address = sanitiseString(body.address, 300);
     const phone = sanitiseString(body.phone, 20);
 
-    // ✅ SECURITY FIX 3: Validate all required fields
     if (!name || name.length < 2) {
       return NextResponse.json(
         { message: "Name must be at least 2 characters." },
@@ -55,7 +44,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ✅ SECURITY FIX 4: Enforce password strength
     const passwordCheck = validatePassword(password);
     if (!passwordCheck.valid) {
       return NextResponse.json(
@@ -64,7 +52,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ✅ SECURITY FIX 5: Whitelist role — reject anything not CUSTOMER or SHOPKEEPER
     if (!validateRole(role)) {
       return NextResponse.json(
         { message: "Invalid role. Must be CUSTOMER or SHOPKEEPER." },
@@ -79,18 +66,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if user already exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      // ✅ SECURITY FIX 6: Don't reveal whether the account exists (user enumeration)
-      // Use a generic message — if you want to be helpful, it's fine to keep this specific
+      
       return NextResponse.json(
         { message: "Email already registered." },
         { status: 400 }
       );
     }
 
-    // ✅ SECURITY FIX 7: Use cost factor 12 (was 10) — much harder to brute-force
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const token = crypto.randomBytes(32).toString("hex");
@@ -121,8 +105,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error: unknown) {
-    // ✅ SECURITY FIX 8: Never expose stack traces or internal errors to the client
-    // Log internally, return a generic message
+   
     console.error("SIGNUP_ERROR:", error);
 
     if (

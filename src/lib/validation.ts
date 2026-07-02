@@ -1,14 +1,4 @@
-// src/lib/validation.ts
-// SECURITY FIX: Centralised input validation and sanitisation
 
-/**
- * Password strength rules:
- * - At least 8 characters
- * - At least 1 uppercase letter
- * - At least 1 lowercase letter
- * - At least 1 number
- * - At least 1 special character
- */
 export function validatePassword(password: string): {
   valid: boolean;
   message: string;
